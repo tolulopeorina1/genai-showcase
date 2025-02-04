@@ -101,3 +101,15 @@ resource "aws_amplify_branch" "main_prod" {
 
 }
 
+resource "aws_amplify_domain_association" "example" {
+  app_id      = aws_amplify_app.cil-gen-ai-use-cases.id
+  domain_name = "dev.cecureproject.com"
+
+  # https://genai.dev.cecureproject.com
+  sub_domain {
+    branch_name = aws_amplify_branch.main_prod.branch_name
+    prefix      = "genai"
+  }
+  
+  wait_for_verification = false
+}
