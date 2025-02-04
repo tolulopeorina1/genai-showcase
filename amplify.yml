@@ -1,0 +1,32 @@
+version: 1
+applications:
+  - appRoot: web-content
+    frontend:
+      buildPath: web-content # Run install and build from the web-content folder
+      phases:
+        preBuild:
+          commands:
+            - echo Entered the pre-build phase...
+            - pwd
+            # - cd web-content
+            - npm install --force
+    
+        build:
+          commands:
+            # - npm install --force
+            - echo "🛠️ Setting up your environmental variables..."
+            # - echo "NEXT_PUBLIC_USER_POOL_ID=$USER_POOL_ID" >> .env
+            # - echo "NEXT_PUBLIC_APP_CLIENT_ID=$APP_CLIENT_ID" >> .env
+            # - echo "NEXT_PUBLIC_REGION" >> .env
+            - echo "Printing environmental variables to the console to ensure they are correct"
+            - npm run build
+            - echo "✅ Success!"
+      artifacts:
+        baseDirectory: .next
+        files:
+          - "**/*"
+      cache:
+        paths:
+          - node_modules/**/*
+            
+
