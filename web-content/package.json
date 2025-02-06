@@ -9,14 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "aws-amplify": "^6.12.2",
     "@heroui/react": "^2.6.14",
+    "aws-amplify": "^6.12.2",
     "axios": "^1.7.9",
     "framer-motion": "^12.0.8",
     "iconsax-react": "^0.0.8",
     "next": "15.1.6",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
