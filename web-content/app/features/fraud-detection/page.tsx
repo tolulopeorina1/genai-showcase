@@ -7,16 +7,16 @@ import {
   useDisclosure,
   Select,
   SelectItem,
-  Avatar,
 } from "@heroui/react";
 import { Form, Input, Spinner } from "@heroui/react";
 import { useEffect, useState } from "react";
 import React from "react";
 import AlertComponent from "@/app/components/places/AlertComponent";
-import { authenticateUser, loginUserApi } from "@/app/services/userServices";
-import { useRouter } from "next/navigation";
 import { locations, users } from "@/app/constants/mock-data";
 import { checkFraudApi } from "@/app/services/endpointServices";
+import { v4 as uuidv4 } from "uuid";
+import CardBox from "@/app/components/places/CardBox";
+import Link from "next/link";
 
 export default function FraudPage() {
   const [errors, setErrors] = React.useState({});
@@ -26,94 +26,86 @@ export default function FraudPage() {
     responseType: "",
     responseMessage: "",
   });
-  const navigate = useRouter();
+  const [data, setData] = useState<any>({});
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
+  const [progress, setProgress] = useState(0);
+  const radius = 40;
+  const circumference = Math.PI * radius; // ~125.6
+
+  const [rotation, setRotation] = useState(270); // Default to left
 
   const toggleNotification = () => {
     setIsOpenRes(!isOpenRes);
   };
+  const generateId = () => uuidv4();
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const id = generateId();
     const data = Object.fromEntries(new FormData(e.currentTarget));
+
     // Initialize an empty errors object
     const newErrors: Record<string, string> = {};
 
     // Check for missing fields and set errors for specific fields
-    if (!data.email) newErrors.email = "Email is required";
-    if (!data.password) newErrors.password = "Password is required";
+    if (!data.amount) newErrors.amount = "Amount is required";
+    if (!data.location) newErrors.location = "Location is required";
+    if (!data.recipient) newErrors.recipient = "Recipient's name is required";
+    if (!data.sender) newErrors.sender = "Sender's name is required";
 
     // If there are errors, update the state and stop submission
-    // if (Object.keys(newErrors).length > 0) {
-    //   setErrors(newErrors);
-    //   return;
-    // }
-    // setLoading(true);
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setLoading(true);
 
     // Clear errors if validation passes
     setErrors({});
 
     const payload = {
-      email: data.email,
-      password: data.password,
+      amount: data.amount,
+      location: data.location,
+      sender_info: data.sender + id,
+      recipent_info: id + data.recipient,
     };
 
     try {
-      const loginUser = await checkFraudApi(payload);
-      if (loginUser?.data?.success) {
+      const checkFraud = await checkFraudApi(payload);
+
+      if (checkFraud?.data?.statusCode === 200) {
         setResponse({
           responseType: "success",
-          responseMessage: "Login Successful",
+          responseMessage: "Successful",
         });
         setIsOpenRes(true);
-        //route to login
+        setData(checkFraud?.data?.body);
+        setProgress(Number(checkFraud?.data?.body?.fraud_score));
+        // fraud_score
+        // reason
+        onOpen();
       } else {
         setResponse({
           responseType: "fail",
-          responseMessage: loginUser?.response?.data?.message,
+          responseMessage: JSON.parse(checkFraud?.data?.body)?.error,
         });
         setIsOpenRes(true);
-      }
-      if (loginUser?.data?.success) {
-        navigate.push("/");
       }
     } catch (error) {
       setLoading(false);
       console.log(error);
     } finally {
       setLoading(false);
+      // setTimeout(toggleNotification, 2000);
+      toggleNotification();
     }
   };
+
   const wrapperStyle = [
     "bg-white",
     "placeholder:text-gray-slate-400 dark:placeholder:text-white/60",
     "border border-solid border-gray-slate-300 rounded-lg",
   ];
-
-  const [progress, setProgress] = useState(80);
-
-  // useEffect(() => {
-  //   setProgress(value);
-  // }, [value]);
-
-  // Convert progress (0-100) to degrees (0-180)
-  const progressDegrees = (progress / 100) * 180;
-
-  const radius = 40;
-  const circumference = Math.PI * radius; // ~125.6
-  const progressOffset = circumference - (progress / 100) * circumference;
-
-  // // Calculate marker position using angle
-  // const angle = (progress / 100) * 180; // Converts 0-100% to 0-180 degrees
-  // const markerX = 50 + radius * Math.cos((angle - 180) * (Math.PI / 180)); // X Position
-  // const markerY = 50 + radius * Math.sin((angle - 180) * (Math.PI / 180)); // Y Position
-
-  const angle = (progress / 100) * 180;
-
-  const addProgress = () => {
-    setProgress((prev) => prev + 10);
-  };
-  const [rotation, setRotation] = useState(270); // Default to left
 
   useEffect(() => {
     const calculateRotation = (value: number): number => {
@@ -126,93 +118,143 @@ export default function FraudPage() {
 
   return (
     <div className="">
-      <div className=" font-[family-name:var(--font-geist-sans)] px-4 sm:px-6">
-        <div className=" my-[5rem] mx-auto max-w-[434px]">
-          <h2 className=" my-4 text-xl font-semibold text-center ">
-            Enter transaction details
-          </h2>
-          <Form
-            className="w-full "
-            validationErrors={errors}
-            onSubmit={onSubmit}
-          >
-            <Input
-              aria-label="Amount"
-              name="amount"
-              placeholder="Amount"
-              className=" w-full my-2"
-              size="lg"
-              classNames={{
-                inputWrapper: wrapperStyle,
-              }}
-              type="number"
-            />
-            <Select
-              aria-label="Location"
-              className="w-full my-2"
-              items={users}
-              placeholder="Location"
-              name="location"
-              classNames={{ mainWrapper: wrapperStyle }}
-              size="lg"
-            >
-              {(user) => (
-                <SelectItem key={user.name} textValue={user.name}>
-                  <div className="flex gap-2 items-center">
-                    <div className="flex flex-col">
-                      <span className="text-small">{user.name}</span>
-                    </div>
-                  </div>
-                </SelectItem>
-              )}
-            </Select>
-            <Input
-              aria-label="Sender info"
-              name="sender"
-              placeholder="Sender info"
-              className=" w-full my-2"
-              size="lg"
-              classNames={{
-                inputWrapper: wrapperStyle,
-              }}
-              type="text"
-            />
-            <Input
-              aria-label="Recipient info"
-              name="recipient"
-              placeholder="Recipient info"
-              className=" w-full my-2"
-              size="lg"
-              classNames={{
-                inputWrapper: wrapperStyle,
-              }}
-              type="text"
-            />
-            <Input
-              aria-label="Sender/recipient info"
-              name="sender/recipient"
-              placeholder="Sender/recipient info"
-              className=" w-full my-2"
-              size="lg"
-              classNames={{
-                inputWrapper: wrapperStyle,
-              }}
-              type="text"
-            />
-            <div className="flex justify-center items-center w-full">
-              <Button
-                type="submit"
-                variant="flat"
-                className="w-[247px] bg-blue-slate-600 text-white rounded-lg"
-                disabled={loading}
-                size="lg"
-              >
-                {loading ? <Spinner /> : "Submit"}
-              </Button>
+      <div className=" flex flex-wrap gap-3">
+        <CardBox
+          header="LLM in Amazon Bedrock: Anthropic Claude"
+          children={
+            <div>
+              <h4 className=" text-black-slate-900 text-sm font-semibold">
+                Why:
+              </h4>
+              <p className=" font-normal text-sm text-gray-slate-600">
+                Claude excels in understanding complex patterns and generating
+                insights from structured and unstructured data.
+              </p>
+              <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
+                Guardrails:
+              </h4>
+              <ul className=" font-normal text-sm text-gray-slate-600 list-disc pl-5">
+                <li>
+                  Ensure data privacy and compliance with regulations like GDPR
+                  and PCI DSS.
+                </li>
+                <li>
+                  Implement strict access controls and encryption for sensitive
+                  transaction data.
+                </li>
+              </ul>
             </div>
-          </Form>
-        </div>
-        <Button onPress={onOpen}>Open Modal</Button>
+          }
+        />
+
+        <CardBox
+          header="Use Case Specification"
+          children={
+            <div>
+              <p className=" font-normal text-sm text-gray-slate-600">
+                Payment Verification to Prevent Fraud within the Financial
+                Services Industry. Using various Financial Advisors from 5
+                different financial institutions in the UK & Africa
+              </p>
+              <p className=" font-normal text-sm text-gray-slate-600 py-2">
+                Put Financial Advisors on a web application such that
+                capabilities to detect fraudulent transactions are shown, we
+                would also be displaying a Dashboard (Risk/Fraud Persona)
+              </p>
+            </div>
+          }
+        />
+
+        <CardBox
+          header="Data Sources"
+          children={
+            <div>
+              <ul className=" font-normal text-sm text-gray-slate-600 list-disc pl-5">
+                <li>
+                  <Link
+                    href="https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml"
+                    target="_blank"
+                    className=" text-blue-slate-500 text-wrap break-words"
+                  >
+                    IBM Transactions for Anti-Money Laundering (AML)
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="https://www.kaggle.com/c/ieee-fraud-detection"
+                    target="_blank"
+                    className=" text-blue-slate-500 text-wrap break-words"
+                  >
+                    https://www.kaggle.com/c/ieee-fraud-detection
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="https://www.kaggle.com/datasets/ealtman2019/credit-card-transactions"
+                    target="_blank"
+                    className=" text-blue-slate-500 text-wrap break-words"
+                  >
+                    https://www.kaggle.com/datasets/ealtman2019/credit-card-transactions
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud"
+                    target="_blank"
+                    className=" text-blue-slate-500 text-wrap break-words"
+                  >
+                    https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          }
+        />
+        <CardBox
+          header="Architectural Diagram"
+          children={
+            <div>
+              <ul className=" font-normal text-sm text-gray-slate-600 list-disc pl-5">
+                <li>
+                  <Link
+                    href="https://app.diagrams.net/#G1ncBecM_SAQuBnUvmf5IqQ0L6uS8_LcQZ#%7B%22pageId%22%3A%22ZUCaLZY7QMhTB9v3b_fR%22%7D"
+                    target="_blank"
+                    className=" text-blue-slate-500 text-wrap break-words"
+                  >
+                    https://app.diagrams.net/#G1ncBecM_SAQuBnUvmf5IqQ0L6uS8_LcQZ#%7B%22pageId%22%3A%22ZUCaLZY7QMhTB9v3b_fR%22%7D
+                  </Link>
+                </li>
+              </ul>
+            </div>
+          }
+        />
+        <CardBox
+          header="APIs to Create"
+          children={
+            <div>
+              <h4 className=" text-black-slate-900 text-sm font-semibold">
+                Fraud Detection API
+              </h4>
+              <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
+                Purpose:
+              </h4>
+              <p className=" font-normal text-sm text-gray-slate-600">
+                Analyze transactions and flag potential laundering.
+              </p>
+              <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
+                Method:
+              </h4>
+              <p className=" font-normal text-sm text-gray-slate-600 font-[family-name:var(--font-roboto-mono)] ">
+                POST /detect-fraud
+              </p>
+              <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
+                Input:
+              </h4>
+            </div>
+          }
+        />
+      </div>
+      <div className=" font-[family-name:var(--font-geist-sans)] px-4 sm:px-6">
         <Modal isOpen={isOpen} onOpenChange={onOpenChange} hideCloseButton>
           <ModalContent>
             {(onClose) => (
@@ -273,54 +315,61 @@ export default function FraudPage() {
                           />
                         </svg>
                       </div>
-                      {/* <div className=" absolute text-center bottom-[-20px] right-[76px]">
-                        <h4 className=" text-[40px] font-extrabold text-black-slate-900">
-                          20
-                        </h4>
-                        <h4 className=" text-black-slate-700 font-medium">
-                          {" "}
-                          /100
-                        </h4>
-                        <div className=" bg-green-slate-50 rounded-[23px] px-1 py-2 text-center">
-                          <p className=" text-green-slate-800 font-medium text-xs ">
-                            Good Fraud Score
-                          </p>
+                      {data?.status !== "High Fraud Score" && (
+                        <div className=" absolute text-center bottom-[-20px] right-[76px]">
+                          <h4 className=" text-[40px] font-extrabold text-black-slate-900">
+                            {progress}
+                          </h4>
+                          <h4 className=" text-black-slate-700 font-medium">
+                            {" "}
+                            /100
+                          </h4>
+                          <div className=" bg-green-slate-50 rounded-[23px] px-1 py-2 text-center">
+                            <p className=" text-green-slate-800 font-medium text-xs ">
+                              Good Fraud Score
+                            </p>
+                          </div>
                         </div>
-                      </div> */}
-                      <div className=" absolute text-center bottom-[-20px] right-[76px]">
-                        <h4 className=" text-[40px] font-extrabold text-black-slate-900">
-                          80
-                        </h4>
-                        <h4 className=" text-black-slate-700 font-medium">
-                          {" "}
-                          /100
-                        </h4>
-                        <div className=" bg-red-slate-50 rounded-[23px] px-1 py-2 text-center">
-                          <p className=" text-red-slate-800 font-medium text-xs ">
-                            High Fraud Score
-                          </p>
+                      )}
+
+                      {data?.status === "High Fraud Score" && (
+                        <div className=" absolute text-center bottom-[-20px] right-[76px]">
+                          <h4 className=" text-[40px] font-extrabold text-black-slate-900">
+                            {progress}
+                          </h4>
+                          <h4 className=" text-black-slate-700 font-medium">
+                            {" "}
+                            /100
+                          </h4>
+                          <div className=" bg-red-slate-50 rounded-[23px] px-1 py-2 text-center">
+                            <p className=" text-red-slate-800 font-medium text-xs ">
+                              High Fraud Score
+                            </p>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
-                  {/* <div>
-                    <p className=" text-gray-slate-500 text-center font-normal my-4">
-                      Transaction looks good as the fraud score does not exceed
-                      the threshold.
-                    </p>
-                  </div> */}
-                  <div className=" px-6">
-                    <p className=" text-gray-slate-500 text-center font-normal my-4">
-                      This transaction is marked as a{" "}
-                      <strong> Potential Fraudulent Transaction</strong> because
-                      of the following:
-                    </p>
+                  {data?.status !== "High Fraud Score" && (
+                    <div>
+                      <p className=" text-gray-slate-500 text-center font-normal my-4">
+                        {data?.reason}
+                      </p>
+                    </div>
+                  )}
+                  {data?.status === "High Fraud Score" && (
+                    <div className=" px-6">
+                      <p className=" text-gray-slate-500 text-center font-normal my-4">
+                        This transaction is marked as a{" "}
+                        <strong> Potential Fraudulent Transaction</strong>{" "}
+                        because of the following:
+                      </p>
 
-                    <ul className=" text-gray-slate-500 font-normal list-disc">
-                      <li>Unusual transaction amount</li>
-                      <li>New recipient</li>
-                    </ul>
-                  </div>
+                      <ul className=" text-gray-slate-500 font-normal list-disc">
+                        <li>{data?.reason}</li>
+                      </ul>
+                    </div>
+                  )}
 
                   <div className="flex justify-center items-center w-full">
                     <Button

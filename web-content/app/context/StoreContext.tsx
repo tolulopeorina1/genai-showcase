@@ -2,6 +2,10 @@
 import React, { createContext, useContext, useState } from "react";
 
 type AppState = {
+  forms: {
+    inputPrompt: string;
+    inputChange: (value: string) => void;
+  };
   cartItems: any[];
 };
 
@@ -10,18 +14,25 @@ type AppContextType = {
   setAppState: React.Dispatch<React.SetStateAction<AppState>>;
 };
 
-export const AppCtx = createContext<AppContextType>({
-  appState: {
-    cartItems: [],
-  },
-  setAppState: () => {},
-});
+export const AppCtx = createContext<AppContextType | undefined>(undefined);
 
 export const StoreContext: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [appState, setAppState] = useState<AppState>({
     cartItems: [],
+    forms: {
+      inputPrompt: "",
+      inputChange: (value: string) => {
+        setAppState((prevState) => ({
+          ...prevState,
+          forms: {
+            ...prevState.forms,
+            inputPrompt: value,
+          },
+        }));
+      },
+    },
   });
 
   return (
@@ -41,7 +52,7 @@ export const AppProviderComponent = ({
 
 export const useAppContext = (): AppContextType => {
   const context = useContext(AppCtx);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useAppContext must be used within a StoreContext");
   }
   return context;

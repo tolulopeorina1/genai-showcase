@@ -3,9 +3,9 @@ import { Button, useDisclosure } from "@heroui/react";
 import { useEffect, useState } from "react";
 import React from "react";
 import AlertComponent from "@/app/components/places/AlertComponent";
-import { authenticateUser, loginUserApi } from "@/app/services/userServices";
+import { loginUserApi } from "@/app/services/userServices";
 import { useRouter } from "next/navigation";
-import { Add, ArrowLeft, Cpu, PresentionChart, User } from "iconsax-react";
+import { Add, Cpu, PresentionChart, User } from "iconsax-react";
 
 export default function Response() {
   const [errors, setErrors] = React.useState({});
@@ -116,33 +116,14 @@ export default function Response() {
     setRotation(newRotation);
   }, [progress]);
 
+  const goBack = () => {
+    navigate.back();
+  };
+
   return (
     <div className="">
       <div className=" px-4 sm:px-6">
         <div className=" my-[1rem] mx-auto max-w-[800px] p-4">
-          {/* <div>
-            <div className=" flex gap-x-3">
-              <div className=" bg-black-slate-800 rounded-full w-8 h-8 flex justify-center items-center">
-                <Cpu size="20" color="#E8EAED" />
-              </div>
-              <h3 className=" text-black-slate-900 font-semibold text-lg">
-                Heading
-              </h3>
-            </div>
-            <p className=" text-black-slate-900 font-normal ml-11">
-              Lorem ipsum dolor sit amet consectetur. Vitae eleifend imperdiet
-              id sed orci vestibulum augue tellus. Dictumst quisque eget metus
-              felis tortor. Augue scelerisque pellentesque scelerisque dui non
-              tincidunt pharetra. Interdum tortor suspendisse facilisi laoreet
-              interdum amet sit. Lacus ac pharetra adipiscing mattis. Pharetra
-              etiam diam arcu lectus sagittis pretium lectus. Lectus elit metus
-              enim urna ultricies quis egestas gravida enim. Faucibus vitae sit
-              scelerisque vel dignissim nunc nibh eu in. Id malesuada at
-              placerat ac quis risus risus. Vulputate leo ut eu elementum.
-              Turpis eget sed varius imperdiet sem facilisi dui. Faucibus sit
-              dui arcu blandit convallis tempor ut neque.
-            </p>
-          </div> */}
           <div>
             <div className=" flex justify-end mr-11">
               <div className="  bg-gray-slate-200 border border-solid border-gray-slate-100 rounded-[10px] p-2 w-fit">
@@ -181,38 +162,102 @@ export default function Response() {
             </div>
 
             <div className=" flex gap-x-3 my-2 bg-blue-slate-250 rounded-lg p-4">
+              <div className=" bg-black-slate-800 rounded-full w-8 h-8 min-w-8 flex justify-center items-center">
+                <Cpu size="20" color="#E8EAED" />
+              </div>
               <div>
-                <div className=" flex gap-x-3">
-                  <div className=" bg-black-slate-800 rounded-full w-8 h-8 flex justify-center items-center">
-                    <Cpu size="20" color="#E8EAED" />
+                <div className="relative w-[270px] h-[150px]">
+                  <svg className="w-full h-full relative" viewBox="0 0 100 60">
+                    {" "}
+                    {/* Gradient Definition */}
+                    <defs>
+                      <linearGradient
+                        id="progressGradient"
+                        x1="0%"
+                        y1="0%"
+                        x2="100%"
+                        y2="0%"
+                      >
+                        <stop offset="0%" stopColor="#12F312" />
+                        <stop offset="80%" stopColor="#FCA327" />
+                        <stop offset="100%" stopColor="#D00707" />
+                      </linearGradient>
+                    </defs>
+                    {/* Progress Arc */}
+                    <path
+                      d="M 10 50 A 40 40 0 0 1 90 50"
+                      fill="none"
+                      stroke="url(#progressGradient)"
+                      strokeWidth="8"
+                      strokeDasharray={circumference}
+                      // strokeDashoffset={progressOffset}
+                      strokeLinecap="round"
+                    />
+                  </svg>
+
+                  {/* Animated Tracking Marker */}
+                  <div
+                    className=" absolute right-[48%] bottom-[10px] h-[122px]"
+                    style={{
+                      transform: ` rotate(${rotation}deg)`,
+                      transition: "transform 0.5s ease-in-out",
+                      transformOrigin: "bottom",
+                    }}
+                  >
+                    <svg
+                      width="8"
+                      height="21"
+                      viewBox="0 0 8 21"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <path
+                        d="M4 0.384766C1.79086 0.384766 0 2.17563 0 4.38477C0 6.5939 1.79086 8.38477 4 8.38477C6.20914 8.38477 8 6.5939 8 4.38477C8 2.17563 6.20914 0.384766 4 0.384766ZM3.25 19.6163C3.25 20.0305 3.58579 20.3663 4 20.3663C4.41421 20.3663 4.75 20.0305 4.75 19.6163H3.25ZM3.25 4.38477L3.25 19.6163H4.75L4.75 4.38477H3.25Z"
+                        fill="black"
+                      />
+                    </svg>
                   </div>
-                  <h3 className=" text-black-slate-900 font-semibold text-lg">
-                    Heading
-                  </h3>
+                  {/* {data?.status !== "High Fraud Score" && (
+                        <div className=" absolute text-center bottom-[-20px] right-[76px]">
+                          <h4 className=" text-[40px] font-extrabold text-black-slate-900">
+                            {progress}
+                          </h4>
+                          <h4 className=" text-black-slate-700 font-medium">
+                            {" "}
+                            /100
+                          </h4>
+                          <div className=" bg-green-slate-50 rounded-[23px] px-1 py-2 text-center">
+                            <p className=" text-green-slate-800 font-medium text-xs ">
+                              Good Fraud Score
+                            </p>
+                          </div>
+                        </div>
+                      )} */}
+
+                  <div className=" absolute text-center bottom-[-20px] right-[76px]">
+                    <h4 className=" text-[40px] font-extrabold text-black-slate-900">
+                      {progress}
+                    </h4>
+                    <h4 className=" text-black-slate-700 font-medium"> /100</h4>
+                    <div className=" bg-red-slate-50 rounded-[23px] px-1 py-2 text-center">
+                      <p className=" text-red-slate-800 font-medium text-xs ">
+                        High Fraud Score
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <p className=" text-black-slate-900 font-normal ml-11">
-                  Lorem ipsum dolor sit amet consectetur. Vitae eleifend
-                  imperdiet id sed orci vestibulum augue tellus. Dictumst
-                  quisque eget metus felis tortor. Augue scelerisque
-                  pellentesque scelerisque dui non tincidunt pharetra. Interdum
-                  tortor suspendisse facilisi laoreet interdum amet sit. Lacus
-                  ac pharetra adipiscing mattis. Pharetra etiam diam arcu lectus
-                  sagittis pretium lectus. Lectus elit metus enim urna ultricies
-                  quis egestas gravida enim. Faucibus vitae sit scelerisque vel
-                  dignissim nunc nibh eu in. Id malesuada at placerat ac quis
-                  risus risus. Vulputate leo ut eu elementum. Turpis eget sed
-                  varius imperdiet sem facilisi dui. Faucibus sit dui arcu
-                  blandit convallis tempor ut neque.
+                <p className=" mt-3  text-black-slate-700 font-normal text-sm">
+                  Transaction looks good and less likely to be a fraudulent
+                  transaction giving with a score of <strong>20/100</strong>.
                 </p>
+                <div className=" flex items-center gap-x-2 bg-gray-slate-100 w-[130px] rounded-[4px] p-1 cursor-pointer mt-2">
+                  <PresentionChart size="20" color="#636C7E" />
+                  <span className=" font-medium text-xs text-black-slate-900">
+                    View dashboard
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className=" flex items-center gap-x-2 bg-gray-slate-100 w-[130px] rounded-[4px] p-1 cursor-pointer mt-2">
-            <PresentionChart size="20" color="#636C7E" />
-            <span className=" font-medium text-xs text-black-slate-900">
-              View dashboard
-            </span>
           </div>
         </div>
         <AlertComponent

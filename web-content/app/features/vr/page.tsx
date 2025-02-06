@@ -11,6 +11,7 @@ import Link from "next/link";
 import { DocumentUpload, TickCircle, Trash } from "iconsax-react";
 import ProductListItem from "@/app/components/places/Product-Item";
 import { propImages } from "@/app/constants/mock-data";
+import CardBox from "@/app/components/places/CardBox";
 
 export default function VirtualReality() {
   const [errors, setErrors] = React.useState({});
@@ -114,6 +115,96 @@ export default function VirtualReality() {
 
   return (
     <div className="">
+      <div className=" flex flex-wrap gap-3">
+        <CardBox
+          header="LLM in Amazon Bedrock: Stable Diffusion XL"
+          children={
+            <div>
+              <h4 className=" text-black-slate-900 text-sm font-semibold">
+                Why:
+              </h4>
+              <p className=" font-normal text-sm text-gray-slate-600">
+                Generates high-resolution lifestyle images tailored to user
+                preferences (e.g., showing apparel on similar body types).
+              </p>
+              <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
+                Guardrails:
+              </h4>
+              <ul className=" font-normal text-sm text-gray-slate-600 list-disc pl-5">
+                <li>Watermark AI-generated images.</li>
+                <li>Block inappropriate customization attempts.</li>
+              </ul>
+            </div>
+          }
+        />
+
+        <CardBox
+          header="Use Case Specification"
+          children={
+            <div>
+              <p className=" font-normal text-sm text-gray-slate-600">
+                Serve 500+ SMBs in e-commerce and professional services (North
+                America & EU). Generate 10K+ monthly assets, including LinkedIn
+                ads and product descriptions.
+              </p>
+            </div>
+          }
+        />
+
+        <CardBox
+          header="Data Sources"
+          children={
+            <div>
+              <ul className=" list-disc font-normal text-sm text-gray-slate-600 pl-5">
+                <li>Marketing Campaign Dataset</li>
+                <li>Brand style guides (PDF/PPT)</li>
+                <li>Historical campaign performance data</li>
+              </ul>
+            </div>
+          }
+        />
+        <CardBox
+          header="System Name: CampaignGen Studio"
+          children={
+            <div>
+              <p className=" font-normal text-sm text-gray-slate-600">
+                A platform that auto-generates localized content, suggests
+                visual assets, and predicts engagement metrics.
+              </p>
+            </div>
+          }
+        />
+        <CardBox
+          header="Architectural Diagram"
+          children={
+            <div>
+              <ul className=" list-disc font-normal text-sm text-gray-slate-600 pl-5">
+                <li></li>
+              </ul>
+            </div>
+          }
+        />
+        <CardBox
+          header="APIs to Create"
+          children={
+            <div>
+              <h4 className=" text-black-slate-900 text-sm font-semibold">
+                Content Generation API
+              </h4>
+              <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
+                Method:
+              </h4>
+              <p className=" font-normal text-sm text-gray-slate-600 font-[family-name:var(--font-roboto-mono)] ">
+                POST /generate: Creates text/assets based on product specs and
+                target demographics.
+              </p>
+              <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
+                Input:
+              </h4>
+            </div>
+          }
+        />
+      </div>
       <div className=" font-[family-name:var(--font-geist-sans)] px-4 sm:px-6">
         <div className=" my-[1rem] mx-auto">
           <h2 className=" text-[52px] font-semibold text-center text-black">

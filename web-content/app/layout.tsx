@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { HeroUIProviders } from "./providers";
+import { AppProviderComponent } from "./context/StoreContext";
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-jakarta-sans",
   subsets: ["latin"],
 });
-
+const robotoMono = Roboto_Mono({
+  variable: "--font-roboto-mono",
+  subsets: ["latin"],
+});
 export const metadata: Metadata = {
   title: "CecureGPT",
   description:
@@ -21,9 +25,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="light">
       <body
-        className={`${jakartaSans.variable} antialiased font-[family-name:var(--font-jakarta-sans)]`}
+        className={`${jakartaSans.variable} ${robotoMono.variable} antialiased font-[family-name:var(--font-jakarta-sans)] customScrollBar`}
       >
-        <HeroUIProviders>{children}</HeroUIProviders>
+        <AppProviderComponent>
+          <HeroUIProviders>{children}</HeroUIProviders>
+        </AppProviderComponent>
       </body>
     </html>
   );
