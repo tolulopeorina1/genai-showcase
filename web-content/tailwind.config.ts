@@ -22,12 +22,18 @@ export default {
         "gray-slate-300": "#D7DADF",
         "gray-slate-400": "#818B9C",
         "gray-slate-500": "#636C7E",
+        "gray-slate-550": "#F6F9FE",
+        "gray-slate-600": "#484F5B",
         "gray-slate-900/8": "#8A988AED",
+
+        "crumb-slate-500": "#667085",
 
         "black-slate-700": "#2D3139",
         "black-slate-800": "#20293A",
         "black-slate-900": "#0F172A",
 
+        "blue-slate-250": "#F4F6F8",
+        "blue-slate-500": "#2572D0",
         "blue-slate-600": "#1E5FAE",
 
         "white-slate-100/70": "#FFFFFFC2",
@@ -37,6 +43,8 @@ export default {
 
         "red-slate-50": "#FEF3F2",
         "red-slate-800": "#991B1B",
+
+        "blue-slate-200": "#C4D9F3",
       },
       boxShadow: {
         "1xl": "0 4px 4px -4px rgb(0 0 0 / 0.15)",
