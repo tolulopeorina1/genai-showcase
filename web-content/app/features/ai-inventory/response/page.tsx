@@ -17,6 +17,28 @@ export default function Response() {
 	const navigate = useRouter();
 
 	const [url, setUrl] = useState('');
+	const [prompt, setPrompt] = useState('');
+
+	const fileInputRef = useRef<HTMLInputElement | null>(null);
+	const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		const file = event.target.files?.[0];
+		if (file) {
+			setSelectedFile(file);
+		}
+	};
+
+	const handleButtonClick = () => {
+		fileInputRef.current?.click();
+	};
+
+	const handleClear = () => {
+		setSelectedFile(null);
+		if (fileInputRef.current) {
+			fileInputRef.current.value = '';
+		}
+	};
 
 	const handleGenerate = async () => {
 		// if (!prompt.trim()) return;
@@ -78,13 +100,13 @@ export default function Response() {
 			</div>
 
 			<FooterComponent
-			// selectedFile={selectedFile}
-			// handleClear={handleClear}
-			// fileInputRef={fileInputRef}
-			// handleFileChange={handleFileChange}
-			// handleButtonClick={handleButtonClick}
-			// setPrompt={setPrompt}
-			// handleGenerate={handleGenerate}
+				selectedFile={selectedFile}
+				handleClear={handleClear}
+				fileInputRef={fileInputRef}
+				handleFileChange={handleFileChange}
+				handleButtonClick={handleButtonClick}
+				setPrompt={setPrompt}
+				// handleGenerate={handleGenerate}
 			/>
 		</>
 	);
