@@ -1,30 +1,8 @@
 'use client';
-import {
-	Button,
-	Input,
-	Select,
-	SelectItem,
-	useDisclosure,
-} from '@heroui/react';
 import { useEffect, useRef, useState } from 'react';
 import React from 'react';
 import AlertComponent from '@/app/components/places/AlertComponent';
-import { loginUserApi } from '@/app/services/userServices';
 import { useRouter } from 'next/navigation';
-import {
-	Add,
-	ArrowLeft,
-	AttachCircle,
-	Cpu,
-	Global,
-	Microphone2,
-	Refresh,
-	Send2,
-	User,
-} from 'iconsax-react';
-import { motion } from 'framer-motion';
-import { useAppContext } from '@/app/context/StoreContext';
-import { models } from '@/app/constants/mock-data';
 import FooterComponent from '@/app/components/places/Footer';
 import QuickSightEmbed from '@/app/components/places/QuickSightEmbed';
 
@@ -38,61 +16,6 @@ export default function Response() {
 	});
 	const navigate = useRouter();
 
-	const toggleNotification = () => {
-		setIsOpenRes(!isOpenRes);
-	};
-	const { appState } = useAppContext();
-	const { inputPrompt } = appState.forms;
-	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		const data = Object.fromEntries(new FormData(e.currentTarget));
-		// Initialize an empty errors object
-		const newErrors: Record<string, string> = {};
-
-		// Check for missing fields and set errors for specific fields
-		if (!data.email) newErrors.email = 'Email is required';
-		if (!data.password) newErrors.password = 'Password is required';
-
-		// If there are errors, update the state and stop submission
-		if (Object.keys(newErrors).length > 0) {
-			setErrors(newErrors);
-			return;
-		}
-		setLoading(true);
-
-		// Clear errors if validation passes
-		setErrors({});
-
-		const payload = {
-			email: data.email,
-			password: data.password,
-		};
-		try {
-			const loginUser = await loginUserApi(payload);
-			if (loginUser?.data?.success) {
-				setResponse({
-					responseType: 'success',
-					responseMessage: 'Login Successful',
-				});
-				setIsOpenRes(true);
-				//route to login
-			} else {
-				setResponse({
-					responseType: 'fail',
-					responseMessage: loginUser?.response?.data?.message,
-				});
-				setIsOpenRes(true);
-			}
-			if (loginUser?.data?.success) {
-				navigate.push('/');
-			}
-		} catch (error) {
-			setLoading(false);
-			console.log(error);
-		} finally {
-			setLoading(false);
-		}
-	};
 	const [url, setUrl] = useState('');
 
 	const handleGenerate = async () => {
@@ -145,12 +68,12 @@ export default function Response() {
 						</div>
 					</div>
 
-					<AlertComponent
+					{/* <AlertComponent
 						isOpenRes={isOpenRes}
 						toggleNotification={toggleNotification}
 						responseType={response.responseType}
 						responseMessage={response.responseMessage}
-					/>
+					/> */}
 				</div>
 			</div>
 
