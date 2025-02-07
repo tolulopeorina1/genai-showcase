@@ -35,12 +35,11 @@ export default function Response() {
 
 	return (
 		<>
-			<div className=''>
+			<div className='max-h-screen'>
 				<div className=' px-4 sm:px-6'>
-					<div className=' my-[1rem] mx-auto  p-4'>
+					<div className=' my-[1rem] mx-auto min-h-screen p-4'>
 						<div className='w-full'>
 							<QuickSightEmbed quickSightUrl={url} />
-							<div className='flex items-center justify-center bg-gray-100 p-4'></div>
 						</div>
 					</div>
 				</div>

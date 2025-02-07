@@ -1,28 +1,22 @@
 'use client';
-import { useDisclosure, Textarea } from '@heroui/react';
+import {
+	useDisclosure,
+	Textarea,
+	Spinner,
+	Button,
+	SelectItem,
+	Select,
+} from '@heroui/react';
 import React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import AlertComponent from '@/app/components/places/AlertComponent';
-import { loginUserApi } from '@/app/services/userServices';
 import { useRouter, usePathname } from 'next/navigation';
-import { DocumentUpload, TickCircle, Trash } from 'iconsax-react';
 import CardBox from '@/app/components/places/CardBoxGrid';
-import FooterComponent from '@/app/components/places/Footer';
-import {
-	AttachCircle,
-	Microphone2,
-	Send2,
-	TableDocument,
-	Global,
-	Add,
-} from 'iconsax-react';
-import { Button, Input, Select, SelectItem } from '@heroui/react';
-import { users } from '@/app/constants/mock-data';
 import usecase5 from '@/public/images/architecture/usecase5.png';
 import Image from 'next/image';
+
+import { models } from '@/app/constants/mock-data';
 export default function AiInventory() {
-	const [errors, setErrors] = React.useState({});
-	const [loading, setLoading] = useState(false);
 	const [isOpenRes, setIsOpenRes] = useState(false);
 	const [response, setResponse] = useState({
 		responseType: '',
@@ -30,8 +24,6 @@ export default function AiInventory() {
 	});
 	const navigate = useRouter();
 	const pathname = usePathname();
-
-	const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
 	const toggleNotification = () => {
 		setIsOpenRes(!isOpenRes);
@@ -43,80 +35,7 @@ export default function AiInventory() {
 		{ role: string; content: string }[]
 	>([]);
 	const toggleVisibility = () => setIsVisible(!isVisible);
-	const fileInputRef = useRef<HTMLInputElement | null>(null);
-	const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		const file = event.target.files?.[0];
-		if (file) {
-			setSelectedFile(file);
-		}
-	};
-
-	const handleButtonClick = () => {
-		fileInputRef.current?.click();
-	};
-
-	// const handleShowDashboard = () => {
-	//  navigate.push('/dashboard');
-	// };
-	const handleClear = () => {
-		setSelectedFile(null);
-		if (fileInputRef.current) {
-			fileInputRef.current.value = '';
-		}
-	};
-
-	const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		const data = Object.fromEntries(new FormData(e.currentTarget));
-		// Initialize an empty errors object
-		const newErrors: Record<string, string> = {};
-
-		// Check for missing fields and set errors for specific fields
-		if (!data.email) newErrors.email = 'Email is required';
-		if (!data.password) newErrors.password = 'Password is required';
-
-		// If there are errors, update the state and stop submission
-		if (Object.keys(newErrors).length > 0) {
-			setErrors(newErrors);
-			return;
-		}
-		setLoading(true);
-
-		// Clear errors if validation passes
-		setErrors({});
-
-		const payload = {
-			email: data.email,
-			password: data.password,
-		};
-		try {
-			const loginUser = await loginUserApi(payload);
-			if (loginUser?.data?.success) {
-				setResponse({
-					responseType: 'success',
-					responseMessage: 'Login Successful',
-				});
-				setIsOpenRes(true);
-				//route to login
-			} else {
-				setResponse({
-					responseType: 'fail',
-					responseMessage: loginUser?.response?.data?.message,
-				});
-				setIsOpenRes(true);
-			}
-			if (loginUser?.data?.success) {
-				navigate.push('/');
-			}
-		} catch (error) {
-			setLoading(false);
-			console.log(error);
-		} finally {
-			setLoading(false);
-		}
-	};
 	const wrapperStyle = [
 		'bg-white',
 		'placeholder:text-gray-slate-400 dark:placeholder:text-white/60',
@@ -231,24 +150,45 @@ export default function AiInventory() {
 				responseType={response.responseType}
 				responseMessage={response.responseMessage}
 			/>
-
-			<div className=''>
-				{/* <FooterComponent /> */}
-				<FooterComponent
-					selectedFile={selectedFile}
-					handleClear={handleClear}
-					fileInputRef={fileInputRef}
-					handleFileChange={handleFileChange}
-					handleButtonClick={handleButtonClick}
-					setPrompt={setPrompt}
-					handleGenerate={() => {
-						console.log('I was clicked');
+			<div className=' flex justify-end gap-x-3 py-4 items-center fixed bottom-0 left-0 right-0 px-16 bg-white'>
+				<Select
+					aria-label='Model'
+					className=' text-black-slate-900 px-[10px] font-normal rounded-[168px] w-[200px] bg-gray-slate-200'
+					items={models}
+					placeholder='Change Model'
+					name='model'
+					classNames={{
+						trigger: selectInput,
+						value: 'text-black-slate-900',
 					}}
-					showDashboard
-					handleShowDashboard={() => {
-						navigate.push(`${pathname}/response`);
-					}}
-				/>
+					variant='flat'
+				>
+					{(model) => (
+						<SelectItem key={model.id} textValue={model.name}>
+							<div className='flex gap-2 items-center'>
+								<div className='flex flex-col'>
+									<span className='text-small'>
+										{model.name}
+									</span>
+								</div>
+							</div>
+						</SelectItem>
+					)}
+				</Select>
+				<div className=''>
+					<Button
+						type='submit'
+						variant='flat'
+						className='w-[200px] bg-blue-slate-600 text-white rounded-lg'
+						disabled={false}
+						size='lg'
+						onPress={() => {
+							navigate.push(`${pathname}/response`);
+						}}
+					>
+						{false ? <Spinner /> : 'Go to Dashboard'}
+					</Button>
+				</div>
 			</div>
 		</div>
 	);
