@@ -1,27 +1,31 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import React from "react";
 import AlertComponent from "@/app/components/places/AlertComponent";
 import { usePathname, useRouter } from "next/navigation";
+import { Link } from "iconsax-react";
 import CardBox from "@/app/components/places/CardBox";
 import FooterComponent from "@/app/components/places/Footer";
 import { useAppContext } from "@/app/context/StoreContext";
 import Image from "next/image";
 import architecture from "@/public/images/architecture.jpg";
 
-export default function MarketingContent() {
+export default function DocumentProcessing() {
+  const [errors, setErrors] = React.useState({});
+  const [loading, setLoading] = useState(false);
   const [isOpenRes, setIsOpenRes] = useState(false);
   const [response, setResponse] = useState({
     responseType: "",
     responseMessage: "",
   });
   const navigate = useRouter();
-  const [prompt, setPrompt] = useState("");
-  const pathname = usePathname();
-  const { appState } = useAppContext();
   const toggleNotification = () => {
     setIsOpenRes(!isOpenRes);
   };
+  const [prompt, setPrompt] = useState("");
+  const pathname = usePathname();
+  const { appState } = useAppContext();
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -42,66 +46,31 @@ export default function MarketingContent() {
       fileInputRef.current.value = "";
     }
   };
-
-  const [progress, setProgress] = useState(80);
-
-  // Convert progress (0-100) to degrees (0-180)
-  const progressDegrees = (progress / 100) * 180;
-
-  const radius = 40;
-  const circumference = Math.PI * radius; // ~125.6
-  const progressOffset = circumference - (progress / 100) * circumference;
-  console.log(appState.forms.inputPrompt);
-  // // Calculate marker position using angle
-  // const angle = (progress / 100) * 180; // Converts 0-100% to 0-180 degrees
-  // const markerX = 50 + radius * Math.cos((angle - 180) * (Math.PI / 180)); // X Position
-  // const markerY = 50 + radius * Math.sin((angle - 180) * (Math.PI / 180)); // Y Position
-
-  const angle = (progress / 100) * 180;
-  const rotationAngle = angle - 90; // Adjust for proper tangent direction
-  const markerX = 50 + radius * Math.cos((angle - 180) * (Math.PI / 180));
-  const markerY = 50 + radius * Math.sin((angle - 180) * (Math.PI / 180));
-
-  const addProgress = () => {
-    setProgress((prev) => prev + 10);
-  };
-  const [rotation, setRotation] = useState(270); // Default to left
-
-  useEffect(() => {
-    const calculateRotation = (value: number): number => {
-      // Linear conversion: 0-100 → 270°-90° (180° total rotation)
-      return 270 + value * 1.8;
-    };
-    const newRotation = calculateRotation(progress);
-    setRotation(newRotation);
-  }, [progress]);
-
   return (
     <>
       <div className="">
         <div className=" flex flex-wrap gap-3">
           <CardBox
-            header="LLM in Amazon Bedrock: Anthropic Claude"
+            header="LLM in Amazon Bedrock: Anthropic Claude + Amazon Textract"
             children={
               <div>
                 <h4 className=" text-black-slate-900 text-sm font-semibold">
                   Why:
                 </h4>
                 <p className=" font-normal text-sm text-gray-slate-600">
-                  Claude generates creative, brand-aligned copy for emails,
-                  social media, and ads while maintaining tone consistency.
+                  Claude&#8217;s advanced NLP capabilities enable context-aware
+                  summarization of 100+ page documents, while Textract extracts
+                  structured data from tables, forms, and handwritten notes with
+                  98% accuracy.
                 </p>
                 <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
                   Guardrails:
                 </h4>
                 <ul className=" font-normal text-sm text-gray-slate-600 list-disc pl-5">
                   <li>
-                    Validate content against brand guidelines using predefined
-                    style guides.
-                  </li>
-                  <li>
-                    Add disclaimers for AI-generated content where legally
-                    required.
+                    Redact sensitive PII/PHI using Amazon Comprehend Medical for
+                    healthcare documents. Block inappropriate customization
+                    attempts.
                   </li>
                 </ul>
               </div>
@@ -113,9 +82,9 @@ export default function MarketingContent() {
             children={
               <div>
                 <p className=" font-normal text-sm text-gray-slate-600">
-                  Serve 500+ SMBs in e-commerce and professional services (North
-                  America & EU). Generate 10K+ monthly assets, including
-                  LinkedIn ads and product descriptions.
+                  Process 50K+ monthly documents for legal, healthcare, and
+                  manufacturing clients (global). Support 15+ file types (PDF,
+                  scanned images, DOCX) with a 4-hour SLA for urgent contracts.
                 </p>
               </div>
             }
@@ -126,20 +95,25 @@ export default function MarketingContent() {
             children={
               <div>
                 <ul className=" list-disc font-normal text-sm text-gray-slate-600 pl-5">
-                  <li>Marketing Campaign Dataset</li>
-                  <li>Brand style guides (PDF/PPT)</li>
-                  <li>Historical campaign performance data</li>
+                  <li>DocVQA Dataset (Document Visual Question Answering)</li>
+                  <li>
+                    Industry-specific templates (SEC filings, clinical trial
+                    reports)
+                  </li>
+                  <li>Archived SharePoint documents</li>
                 </ul>
               </div>
             }
           />
           <CardBox
-            header="System Name: CampaignGen Studio"
+            header="System Name: DocIntel Pro"
             children={
               <div>
                 <p className=" font-normal text-sm text-gray-slate-600">
-                  A platform that auto-generates localized content, suggests
-                  visual assets, and predicts engagement metrics.
+                  An end-to-end platform that classifies documents, extracts key
+                  clauses (e.g., NDAs, termination terms), and generates
+                  compliance checklists. Features version comparison for revised
+                  contracts.
                 </p>
               </div>
             }
@@ -148,9 +122,7 @@ export default function MarketingContent() {
             header="Architectural Diagram"
             children={
               <div>
-                <div>
-                  <Image src={architecture} alt="architecture"></Image>
-                </div>
+                <Image src={architecture} alt="architecture"></Image>
               </div>
             }
           />
@@ -159,23 +131,26 @@ export default function MarketingContent() {
             children={
               <div>
                 <h4 className=" text-black-slate-900 text-sm font-semibold">
-                  Content Generation API
+                  Image Render API
                 </h4>
-                <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
-                  Method:
-                </h4>
-                <p className=" font-normal text-sm text-gray-slate-600 font-[family-name:var(--font-roboto-mono)] ">
-                  POST /generate: Creates text/assets based on product specs and
-                  target demographics.
-                </p>
-                <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
-                  Input:
-                </h4>
+                <ul className=" list-disc font-normal text-sm text-gray-slate-600 pl-5 font-[family-name:var(--font-roboto-mono)]">
+                  <li>
+                    GET /ingest: Accepts documents via URL or binary upload.
+                    Performs OCR, language detection, and metadata tagging.
+                  </li>
+                  <li>
+                    Input: File/URL, priority level (e.g., "urgent"), document
+                    type (e.g., "invoice").
+                  </li>
+                  <li>
+                    Output: Document ID, extracted text, detected entities
+                    (e.g., "company_name": "Acme Corp").
+                  </li>
+                </ul>
               </div>
             }
           />
         </div>
-
         <div className=" font-[family-name:var(--font-geist-sans)] px-4 sm:px-6">
           <AlertComponent
             isOpenRes={isOpenRes}
@@ -195,7 +170,7 @@ export default function MarketingContent() {
         setPrompt={setPrompt}
         handleGenerate={() => {
           appState.forms.inputChange(prompt);
-          navigate.push(`${pathname}/response`);
+          navigate.push(`/more-features/document-processing`);
         }}
       />
     </>

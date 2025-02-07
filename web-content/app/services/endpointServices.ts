@@ -11,3 +11,15 @@ export const checkFraudApi = async (data: any): Promise<any> => {
     return error;
   }
 };
+
+export const getFinancialAdviceApi = async (data: any): Promise<any> => {
+  try {
+    return await http.apiCall.post(`${endpointData.financialAdvisor}`, data, {
+      headers: {
+        // Authorization: token,
+      },
+    });
+  } catch (error) {
+    return error;
+  }
+};

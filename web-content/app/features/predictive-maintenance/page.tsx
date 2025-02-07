@@ -8,8 +8,10 @@ import FooterComponent from "@/app/components/places/Footer";
 import { useAppContext } from "@/app/context/StoreContext";
 import Image from "next/image";
 import architecture from "@/public/images/architecture.jpg";
+import { Button, Select, SelectItem, Spinner } from "@heroui/react";
+import { models } from "@/app/constants/mock-data";
 
-export default function MarketingContent() {
+export default function PredictiveMaintenance() {
   const [isOpenRes, setIsOpenRes] = useState(false);
   const [response, setResponse] = useState({
     responseType: "",
@@ -75,33 +77,37 @@ export default function MarketingContent() {
     const newRotation = calculateRotation(progress);
     setRotation(newRotation);
   }, [progress]);
+  const selectInput = [
+    "placeholder:text-black-slate-900",
+    "border border-solid border-gray-slate-100 rounded-[168px] bg-gray-slate-200",
+  ];
 
   return (
     <>
       <div className="">
         <div className=" flex flex-wrap gap-3">
           <CardBox
-            header="LLM in Amazon Bedrock: Anthropic Claude"
+            header="LLM in Amazon Bedrock: Amazon Lookout for Equipment + Claude"
             children={
               <div>
                 <h4 className=" text-black-slate-900 text-sm font-semibold">
                   Why:
                 </h4>
                 <p className=" font-normal text-sm text-gray-slate-600">
-                  Claude generates creative, brand-aligned copy for emails,
-                  social media, and ads while maintaining tone consistency.
+                  Lookout analyzes IoT sensor patterns (vibration, temperature),
+                  while Claude interprets maintenance logs to predict failures
+                  14 days in advance.
                 </p>
                 <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
                   Guardrails:
                 </h4>
                 <ul className=" font-normal text-sm text-gray-slate-600 list-disc pl-5">
                   <li>
-                    Validate content against brand guidelines using predefined
-                    style guides.
+                    Flag predictions with &lt;85% confidence for manual review.
                   </li>
                   <li>
-                    Add disclaimers for AI-generated content where legally
-                    required.
+                    Enforce safety locks to prevent automated shutdowns in
+                    critical infrastructure.
                   </li>
                 </ul>
               </div>
@@ -113,9 +119,15 @@ export default function MarketingContent() {
             children={
               <div>
                 <p className=" font-normal text-sm text-gray-slate-600">
-                  Serve 500+ SMBs in e-commerce and professional services (North
-                  America & EU). Generate 10K+ monthly assets, including
-                  LinkedIn ads and product descriptions.
+                  Monitor 5,000+ industrial assets (HVAC systems, wind turbines,
+                  assembly line robots) across energy, aviation, and automotive
+                  sectors in North America and the Middle East. Predict
+                  equipment failures 14–21 days in advance using IoT sensor data
+                  (vibration, temperature) and maintenance logs. Reduces
+                  unplanned downtime by 45%, extends asset lifespans by 20%, and
+                  auto-dispatches technicians via ServiceNow integration.
+                  Includes digital twins for failure simulations and ROI
+                  dashboards showing $2M+ annual savings per facility.
                 </p>
               </div>
             }
@@ -126,20 +138,21 @@ export default function MarketingContent() {
             children={
               <div>
                 <ul className=" list-disc font-normal text-sm text-gray-slate-600 pl-5">
-                  <li>Marketing Campaign Dataset</li>
-                  <li>Brand style guides (PDF/PPT)</li>
-                  <li>Historical campaign performance data</li>
+                  <li>NASA Turbofan Degradation Dataset</li>
+                  <li>Equipment service histories</li>
+                  <li>Supplier lead time databases</li>
                 </ul>
               </div>
             }
           />
           <CardBox
-            header="System Name: CampaignGen Studio"
+            header="System Name: MaintainX Predict"
             children={
               <div>
                 <p className=" font-normal text-sm text-gray-slate-600">
-                  A platform that auto-generates localized content, suggests
-                  visual assets, and predicts engagement metrics.
+                  Monitors 10,000+ assets across energy, aviation, and
+                  manufacturing. Recommends part replacements, estimates
+                  downtime costs, and auto-dispatches field technicians.
                 </p>
               </div>
             }
@@ -159,21 +172,63 @@ export default function MarketingContent() {
             children={
               <div>
                 <h4 className=" text-black-slate-900 text-sm font-semibold">
-                  Content Generation API
+                  Asset Health API
                 </h4>
-                <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
-                  Method:
+                <ul className=" list-disc font-normal text-sm text-gray-slate-600 pl-5 font-[family-name:var(--font-roboto-mono)]">
+                  <li>
+                    GET /health/&#123;asset_id&#125;: Returns real-time health
+                    scores (0-100), predicted failure date, and risk factors.
+                  </li>
+                </ul>
+                <h4 className=" text-black-slate-900 text-sm font-semibold">
+                  Work Order API
                 </h4>
-                <p className=" font-normal text-sm text-gray-slate-600 font-[family-name:var(--font-roboto-mono)] ">
-                  POST /generate: Creates text/assets based on product specs and
-                  target demographics.
-                </p>
-                <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
-                  Input:
-                </h4>
+                <ul className=" list-disc font-normal text-sm text-gray-slate-600 pl-5 font-[family-name:var(--font-roboto-mono)]">
+                  <li>
+                    POST /workorder: Generates repair checklists, orders parts
+                    via integrated vendors (e.g., Grainger), and books
+                    technician slots.
+                  </li>
+                </ul>
               </div>
             }
           />
+        </div>
+
+        <div className=" flex justify-end gap-x-3 py-4 items-center fixed bottom-0 left-0 right-0 px-16 bg-white">
+          <Select
+            aria-label="Model"
+            className=" text-black-slate-900 px-[10px] font-normal rounded-[168px] w-[200px] bg-gray-slate-200"
+            items={models}
+            placeholder="Change Model"
+            name="model"
+            classNames={{
+              trigger: selectInput,
+              value: "text-black-slate-900",
+            }}
+            variant="flat"
+          >
+            {(model) => (
+              <SelectItem key={model.id} textValue={model.name}>
+                <div className="flex gap-2 items-center">
+                  <div className="flex flex-col">
+                    <span className="text-small">{model.name}</span>
+                  </div>
+                </div>
+              </SelectItem>
+            )}
+          </Select>
+          <div className="">
+            <Button
+              type="submit"
+              variant="flat"
+              className="w-[200px] bg-blue-slate-600 text-white rounded-lg"
+              disabled={false}
+              size="lg"
+            >
+              {false ? <Spinner /> : "Go to Dashboard"}
+            </Button>
+          </div>
         </div>
 
         <div className=" font-[family-name:var(--font-geist-sans)] px-4 sm:px-6">
@@ -185,19 +240,6 @@ export default function MarketingContent() {
           />
         </div>
       </div>
-
-      <FooterComponent
-        selectedFile={selectedFile}
-        handleClear={handleClear}
-        fileInputRef={fileInputRef}
-        handleFileChange={handleFileChange}
-        handleButtonClick={handleButtonClick}
-        setPrompt={setPrompt}
-        handleGenerate={() => {
-          appState.forms.inputChange(prompt);
-          navigate.push(`${pathname}/response`);
-        }}
-      />
     </>
   );
 }

@@ -80,6 +80,21 @@ export default function RootLayout({
         return "AI-Powered Inventory Management and Demand Forecasting";
       case page.startsWith("/features/vr/response"):
         return "Virtual Try-On and Personalized Shopping Experiences";
+      case page === "/features/employee-training":
+        return "Employee Training and Onboarding with AI Tutors";
+      case page === "/features/employee-training/response":
+        return "Employee Training and Onboarding with AI Tutors";
+      case page === "/features/virtual-tryon":
+        return "Personalized Product Images";
+      case page === "/features/employee-training/response":
+        return "Employee Training and Onboarding with AI Tutors";
+      case page === "/features/document-processing":
+        return "Automated Document Processing and Summarization";
+      case page === "/features/predictive-maintenance":
+        return "Predictive Maintenance for Operational Efficiency";
+      case page === "/features/ai-compliance":
+        return "AI-Driven Compliance and Risk Management";
+
       default:
         return "Page Not Found";
     }

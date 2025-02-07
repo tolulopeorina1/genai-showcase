@@ -1,19 +1,10 @@
 "use client";
 import { Button } from "@heroui/button";
-import {
-  Modal,
-  ModalContent,
-  ModalBody,
-  useDisclosure,
-  Select,
-  SelectItem,
-} from "@heroui/react";
-import { Form, Input, Spinner } from "@heroui/react";
+import { Modal, ModalContent, ModalBody, useDisclosure } from "@heroui/react";
+import { Spinner } from "@heroui/react";
 import { useEffect, useRef, useState } from "react";
 import React from "react";
 import AlertComponent from "@/app/components/places/AlertComponent";
-import { locations, users } from "@/app/constants/mock-data";
-import { checkFraudApi } from "@/app/services/endpointServices";
 import { v4 as uuidv4 } from "uuid";
 import CardBox from "@/app/components/places/CardBox";
 import Link from "next/link";
@@ -23,7 +14,7 @@ import { useAppContext } from "@/app/context/StoreContext";
 import Image from "next/image";
 import architecture from "@/public/images/architecture.jpg";
 
-export default function FraudPage() {
+export default function EmployeeTraining() {
   const [errors, setErrors] = React.useState({});
   const [loading, setLoading] = useState(false);
   const [isOpenRes, setIsOpenRes] = useState(false);
@@ -89,30 +80,29 @@ export default function FraudPage() {
 
   return (
     <>
-      <div className="mb-8">
+      <div className="">
         <div className=" flex flex-wrap gap-3">
           <CardBox
-            header="LLM in Amazon Bedrock: Anthropic Claude"
+            header="LLM in Amazon Bedrock: Anthropic Claude + Amazon Kendra"
             children={
               <div>
                 <h4 className=" text-black-slate-900 text-sm font-semibold">
                   Why:
                 </h4>
                 <p className=" font-normal text-sm text-gray-slate-600">
-                  Claude excels in understanding complex patterns and generating
-                  insights from structured and unstructured data.
+                  Claude simulates realistic workplace scenarios (e.g., customer
+                  objections), while Kendra indexes internal wikis and SOPs for
+                  instant knowledge retrieval.
                 </p>
                 <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
                   Guardrails:
                 </h4>
                 <ul className=" font-normal text-sm text-gray-slate-600 list-disc pl-5">
                   <li>
-                    Ensure data privacy and compliance with regulations like
-                    GDPR and PCI DSS.
-                  </li>
-                  <li>
-                    Implement strict access controls and encryption for
-                    sensitive transaction data.
+                    Restrict training data access by employee seniority (e.g.,
+                    hide executive compensation modules from interns). Disable
+                    role-playing for harassment-sensitive topics (use canned
+                    responses). Block inappropriate customization attempts.
                   </li>
                 </ul>
               </div>
@@ -124,14 +114,17 @@ export default function FraudPage() {
             children={
               <div>
                 <p className=" font-normal text-sm text-gray-slate-600">
-                  Payment Verification to Prevent Fraud within the Financial
-                  Services Industry. Using various Financial Advisors from 5
-                  different financial institutions in the UK & Africa
-                </p>
-                <p className=" font-normal text-sm text-gray-slate-600 py-2">
-                  Put Financial Advisors on a web application such that
-                  capabilities to detect fraudulent transactions are shown, we
-                  would also be displaying a Dashboard (Risk/Fraud Persona)
+                  Train 10,000+ employees annually across manufacturing,
+                  healthcare, and tech sectors using role-specific AI tutors.
+                  Simulates real-world scenarios like ERP software navigation,
+                  patient triage protocols, and cybersecurity threat response.
+                  Integrates with Workday, BambooHR, and Slack to track
+                  progress, issue certifications (e.g., OSHA compliance), and
+                  auto-assign modules based on skill gaps. Includes VR safety
+                  drills for high-risk roles (e.g., factory operators) and
+                  adaptive quizzes with 90% retention rates. Metrics: 50% faster
+                  onboarding, 40% reduction in training costs, and AI-curated
+                  upskilling paths for promotions.
                 </p>
               </div>
             }
@@ -142,57 +135,31 @@ export default function FraudPage() {
             children={
               <div>
                 <ul className=" font-normal text-sm text-gray-slate-600 list-disc pl-5">
-                  <li>
-                    <Link
-                      href="https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml"
-                      target="_blank"
-                      className=" text-blue-slate-500 text-wrap break-words"
-                    >
-                      IBM Transactions for Anti-Money Laundering (AML)
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="https://www.kaggle.com/c/ieee-fraud-detection"
-                      target="_blank"
-                      className=" text-blue-slate-500 text-wrap break-words"
-                    >
-                      https://www.kaggle.com/c/ieee-fraud-detection
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="https://www.kaggle.com/datasets/ealtman2019/credit-card-transactions"
-                      target="_blank"
-                      className=" text-blue-slate-500 text-wrap break-words"
-                    >
-                      https://www.kaggle.com/datasets/ealtman2019/credit-card-transactions
-                    </Link>
-                  </li>
-                  <li>
-                    <Link
-                      href="https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud"
-                      target="_blank"
-                      className=" text-blue-slate-500 text-wrap break-words"
-                    >
-                      https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud
-                    </Link>
-                  </li>
+                  <li>LinkedIn Learning Course Transcripts</li>
+                  <li>Employee performance reviews</li>
+                  <li>OSHA safety guidelines</li>
                 </ul>
               </div>
             }
           />
           <CardBox
+            header="System Name: DocIntel Pro"
+            children={
+              <div>
+                <p className=" font-normal text-sm text-gray-slate-600">
+                  A personalized upskilling platform with AI mentors, VR
+                  simulations for high-risk roles (e.g., forklift operators),
+                  and automated certification tracking.
+                </p>
+              </div>
+            }
+          />
+
+          <CardBox
             header="Architectural Diagram"
             children={
               <div>
-                <Link
-                  href="https://app.diagrams.net/#G1ncBecM_SAQuBnUvmf5IqQ0L6uS8_LcQZ#%7B%22pageId%22%3A%22ZUCaLZY7QMhTB9v3b_fR%22%7D"
-                  target="_blank"
-                  className=" text-blue-slate-500 text-wrap break-words"
-                >
-                  <Image src={architecture} alt="architecture"></Image>
-                </Link>
+                <Image src={architecture} alt="architecture"></Image>
               </div>
             }
           />
@@ -201,23 +168,27 @@ export default function FraudPage() {
             children={
               <div>
                 <h4 className=" text-black-slate-900 text-sm font-semibold">
-                  Fraud Detection API
+                  Training Module API
                 </h4>
-                <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
-                  Purpose:
+                <ul className=" list-disc font-normal text-sm text-gray-slate-600 pl-5 font-[family-name:var(--font-roboto-mono)]">
+                  <li>
+                    POST /module: Generates interactive courses based on job
+                    roles (e.g., "Level 2 Cybersecurity Analyst").
+                  </li>
+                  <li>
+                    Input: Role, skill gaps, preferred learning style
+                    (video/text/hands-on).
+                  </li>
+                </ul>
+                <h4 className=" text-black-slate-900 text-sm font-semibold">
+                  Assessment API
                 </h4>
-                <p className=" font-normal text-sm text-gray-slate-600">
-                  Analyze transactions and flag potential laundering.
-                </p>
-                <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
-                  Method:
-                </h4>
-                <p className=" font-normal text-sm text-gray-slate-600 font-[family-name:var(--font-roboto-mono)] ">
-                  POST /detect-fraud
-                </p>
-                <h4 className=" text-black-slate-900 text-sm font-semibold my-2">
-                  Input:
-                </h4>
+                <ul className=" list-disc font-normal text-sm text-gray-slate-600 pl-5 font-[family-name:var(--font-roboto-mono)]">
+                  <li>
+                    POST /assess: Administers quizzes with adaptive difficulty;
+                    provides mistake breakdowns.
+                  </li>
+                </ul>
               </div>
             }
           />
@@ -370,23 +341,25 @@ export default function FraudPage() {
         handleFileChange={handleFileChange}
         handleButtonClick={handleButtonClick}
         setPrompt={setPrompt}
-        errorMessage={errorMessage}
-        isInvalid={isInvalid}
+        // errorMessage={errorMessage}
+        // isInvalid={isInvalid}
+        // handleGenerate={() => {
+        //   if (isInvalid) return;
+        //   appState.forms.inputChange(prompt);
+        //   setAppState((prevState) => ({
+        //     ...prevState,
+        //     forms: {
+        //       ...prevState.forms,
+        //       selectedFile,
+        //     },
+        //   }));
+        //   navigate.push(`${pathname}/response`);
+        // }}
         handleGenerate={() => {
-          if (isInvalid) return;
           appState.forms.inputChange(prompt);
-          setAppState((prevState) => ({
-            ...prevState,
-            forms: {
-              ...prevState.forms,
-              selectedFile,
-            },
-          }));
           navigate.push(`${pathname}/response`);
         }}
       />
     </>
   );
 }
-
-// translateX(-50%)

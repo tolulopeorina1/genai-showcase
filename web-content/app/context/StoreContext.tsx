@@ -5,8 +5,8 @@ type AppState = {
   forms: {
     inputPrompt: string;
     inputChange: (value: string) => void;
+    selectedFile: File | null;
   };
-  cartItems: any[];
 };
 
 type AppContextType = {
@@ -20,7 +20,6 @@ export const StoreContext: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [appState, setAppState] = useState<AppState>({
-    cartItems: [],
     forms: {
       inputPrompt: "",
       inputChange: (value: string) => {
@@ -32,6 +31,7 @@ export const StoreContext: React.FC<{ children: React.ReactNode }> = ({
           },
         }));
       },
+      selectedFile: null,
     },
   });
 

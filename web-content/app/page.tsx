@@ -4,6 +4,7 @@ import logo from "@/public/images/cil-logo.png";
 import facebook from "@/public/images/svgs/facebook.svg";
 import linkedin from "@/public/images/svgs/linkedin.svg";
 import x from "@/public/images/svgs/x.svg";
+import chatBot from "@/public/images/svgs/chatBot.svg";
 
 import awsPartner from "@/public/images/aws-partner.png";
 import Link from "next/link";
@@ -23,8 +24,21 @@ import {
   Add,
 } from "iconsax-react";
 import React, { useRef, useState } from "react";
-import { Button, Input, Select, SelectItem } from "@heroui/react";
+import {
+  Button,
+  Drawer,
+  DrawerBody,
+  DrawerContent,
+  DrawerFooter,
+  DrawerHeader,
+  Input,
+  Select,
+  SelectItem,
+  useDisclosure,
+} from "@heroui/react";
 import { users } from "./constants/mock-data";
+import FooterComponent from "./components/places/Footer";
+import thinking from "@/public/images/svgs/thinking.svg";
 
 const homepageItems = [
   {
@@ -49,27 +63,27 @@ const homepageItems = [
   },
   {
     text: "Virtual Try-On and Personalized Shopping Experiences",
-    link: "/features/vr",
+    link: "/features/virtual-tryon",
     icon: <UserSquare size="20" color="#2572D0" />,
   },
   {
     text: "Automated Document Processing and Summarization",
-    link: "/",
+    link: "/features/document-processing",
     icon: <TableDocument size="20" color="#2572D0" />,
   },
   {
     text: "Employee Training and Onboarding with AI Tutors",
-    link: "/",
+    link: "/features/employee-training",
     icon: <User size="20" color="#2572D0" />,
   },
   {
     text: "Predictive Maintenance for Operational Efficiency",
-    link: "/",
+    link: "/features/predictive-maintenance",
     icon: <CloudConnection size="20" color="#2572D0" />,
   },
   {
     text: "AI-Driven Compliance and Risk Management",
-    link: "/",
+    link: "/features/ai-compliance",
     icon: <Cpu size="20" color="#2572D0" />,
   },
 ];
@@ -86,10 +100,15 @@ const selectInput = [
 
 export default function Home() {
   const [isVisible, setIsVisible] = React.useState(false);
+  const [prompt, setPrompt] = useState("");
 
   const toggleVisibility = () => setIsVisible(!isVisible);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
+  const [messages, setMessages] = useState<{ role: string; content: string }[]>(
+    []
+  );
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -109,7 +128,7 @@ export default function Home() {
     }
   };
   return (
-    <div className=" flex flex-col max-h-dvh font-[family-name:var(--font-jakarta-sans)] min-h-dvh  ">
+    <div className=" flex flex-col max-h-dvh font-[family-name:var(--font-jakarta-sans)] min-h-dvh relative ">
       <header className=" flex-col md:flex md:flex-row bg-gray-slate-200 py-4 flex justify-between items-center border-b border-solid border-b-gray-slate-100 px-8">
         <h1 className=" text-black-slate-900 font-semibold text-xl">
           Cecure Intelligence Limited - Gen AI Showcase
@@ -133,7 +152,7 @@ export default function Home() {
               </Link>
             ))}
           </div>
-          <div className=" text-end flex flex-col justify-between">
+          <div className=" text-end flex flex-col">
             <div>
               <h1 className=" text-black font-medium text-[48px] ">
                 CIL Gen AI Solutions for Modern Enterprisers
@@ -144,10 +163,7 @@ export default function Home() {
               </h4>
             </div>
 
-            <div className=" mb-4">
-              <p className=" text-[#1B1E22] font-semibold mb-1">
-                Follow us on socials:
-              </p>
+            <div className=" mt-4">
               <div className=" flex justify-end gap-x-2">
                 <Link
                   href={"https://web.facebook.com/cecureintelligence"}
@@ -271,6 +287,115 @@ export default function Home() {
           </Select>
         </div>
       </footer>
+      <div
+        className=" mb-4 fixed right-9 flex gap-x-2 bottom-[85px] cursor-pointer"
+        onClick={onOpen}
+      >
+        <div className=" bg-white border border-solid border-[#D7DADF] rounded-[40px] py-4 px-[20px] h-[44px] flex items-center justify-center mr-[-20px] ">
+          Hi there! 👋🏽
+        </div>
+        <Image src={chatBot} alt="chat" width={80} height={80} />
+      </div>
+
+      <Drawer
+        isOpen={isOpen}
+        onOpenChange={onOpenChange}
+        size="lg"
+        className=" rounded-none"
+        hideCloseButton
+      >
+        <DrawerContent>
+          {(onClose) => (
+            <>
+              <DrawerHeader className="flex flex-col gap-1 border-b-gray-slate-300 border border-solid bg-blue-slate-250">
+                <div className=" flex justify-between " onClick={onClose}>
+                  <h4 className=" text-black-slate-900 text-sm font-semibold ">
+                    CIL Gen-AI Chat bot
+                  </h4>
+                  <span className=" rotate-45 cursor-pointer">
+                    <Add size="20" color="#636C7E" />
+                  </span>
+                </div>
+              </DrawerHeader>
+              <DrawerBody>
+                <div className=" flex flex-col justify-between h-full">
+                  <div className=" text-black-slate-900">
+                    <h3 className=" font-normal text-4xl">Hi there!</h3>
+                    <h3 className=" text-[32px] font-bold">
+                      Get started with what need to know
+                    </h3>
+                  </div>
+                  <Image src={thinking} alt="logo" width={38} height={38} />
+                  <div className=" grid grid-cols-2 gap-4">
+                    <div className=" bg-[#F6F9FE] rounded-[7px] border bordr-solid border-[#C4D9F3] p-4 font-medium text-sm">
+                      Automated Fraud Detection and Prevention
+                    </div>
+                    <div className=" bg-[#F6F9FE] rounded-[7px] border bordr-solid border-[#C4D9F3] p-4 font-medium text-sm">
+                      Automated Fraud Detection and Prevention
+                    </div>
+                  </div>
+
+                  {messages.map((message, i) => {
+                    if (message.role === "bot") {
+                      return (
+                        <div key={i}>
+                          <div className=" flex gap-x-3 my-2 bg-blue-slate-250 rounded-lg p-4">
+                            <div>
+                              <div className=" flex gap-x-3">
+                                <div className=" bg-black-slate-800 rounded-full w-8 h-8 flex justify-center items-center">
+                                  <Cpu size="20" color="#E8EAED" />
+                                </div>
+                                <h3 className=" text-black-slate-900 font-semibold text-lg">
+                                  {messages[i - 1].content}
+                                  connf
+                                </h3>
+                              </div>
+                              <p className=" text-black-slate-900 font-normal ml-11">
+                                {message.content}
+                                bidndnd
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div
+                          className=" flex gap-x-3 justify-end my-2 items-center"
+                          key={i}
+                        >
+                          <p className=" text-right">
+                            {message.content}
+                            djdjdjd
+                          </p>
+                          <div className=" bg-blue-slate-500 rounded-full w-8 h-8 min-w-8 flex justify-center items-center">
+                            <User size="20" color="#E8EAED" />
+                          </div>
+                        </div>
+                      );
+                    }
+                  })}
+                </div>
+              </DrawerBody>
+              <DrawerFooter className=" block">
+                <FooterComponent
+                  selectedFile={selectedFile}
+                  handleClear={handleClear}
+                  fileInputRef={fileInputRef}
+                  handleFileChange={handleFileChange}
+                  handleButtonClick={handleButtonClick}
+                  setPrompt={setPrompt}
+                  handleGenerate={() => {
+                    // appState.forms.inputChange(prompt);
+                    // navigate.push(`/more-features/document-processing`);
+                  }}
+                  notFixedPosition
+                />
+              </DrawerFooter>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }

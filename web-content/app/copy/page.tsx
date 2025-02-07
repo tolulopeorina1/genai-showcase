@@ -18,7 +18,7 @@ export default function MarketingContentGenerator2() {
     setLoading(true);
 
     // Append user message
-    setMessages((prev) => [...prev, { role: "user", content: "prompt" }]);
+    setMessages((prev) => [...prev, { role: "user", content: prompt }]);
 
     // Send request to backend
     const response = await fetch("/api/prompt", {
