@@ -343,22 +343,22 @@ export default function EmployeeTraining() {
         setPrompt={setPrompt}
         // errorMessage={errorMessage}
         // isInvalid={isInvalid}
-        // handleGenerate={() => {
-        //   if (isInvalid) return;
-        //   appState.forms.inputChange(prompt);
-        //   setAppState((prevState) => ({
-        //     ...prevState,
-        //     forms: {
-        //       ...prevState.forms,
-        //       selectedFile,
-        //     },
-        //   }));
-        //   navigate.push(`${pathname}/response`);
-        // }}
         handleGenerate={() => {
+          // if (isInvalid) return;
           appState.forms.inputChange(prompt);
+          setAppState((prevState) => ({
+            ...prevState,
+            forms: {
+              ...prevState.forms,
+              selectedFile,
+            },
+          }));
           navigate.push(`${pathname}/response`);
         }}
+        // handleGenerate={() => {
+        //   appState.forms.inputChange(prompt);
+        //   navigate.push(`${pathname}/response`);
+        // }}
       />
     </>
   );

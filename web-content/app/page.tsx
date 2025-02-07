@@ -5,6 +5,7 @@ import facebook from "@/public/images/svgs/facebook.svg";
 import linkedin from "@/public/images/svgs/linkedin.svg";
 import x from "@/public/images/svgs/x.svg";
 import chatBot from "@/public/images/svgs/chatBot.svg";
+import { v4 as uuidv4 } from "uuid";
 
 import awsPartner from "@/public/images/aws-partner.png";
 import Link from "next/link";
@@ -39,6 +40,7 @@ import {
 import { users } from "./constants/mock-data";
 import FooterComponent from "./components/places/Footer";
 import thinking from "@/public/images/svgs/thinking.svg";
+import { endpointData } from "./constants/endpointa";
 
 const homepageItems = [
   {
@@ -109,7 +111,8 @@ export default function Home() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>(
     []
   );
-
+  const [loading, setLoading] = useState(false);
+  const generateId = () => uuidv4();
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -126,6 +129,202 @@ export default function Home() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
+  };
+
+  const handleGenerate = async (prompt: string) => {
+    if (!prompt.trim()) return;
+    setLoading(true);
+
+    // // Append user message
+    setMessages((prev) => [...prev, { role: "user", content: prompt }]);
+
+    // // Wait for state update before fetching response
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    console.log(messages); // This will still log the old state
+    const paylaoad = { body: { userMessage: prompt, conversationId: "1234" } };
+    // Send request to backend
+    const response = await fetch(endpointData.automatedChatBot, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(paylaoad),
+    });
+    console.log(response);
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    let accumulatedText = "";
+
+    let botMessage = { role: "bot", content: "" };
+
+    setMessages((prev) => [...prev, botMessage]); // Append an empty bot message first
+
+    while (reader) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      accumulatedText += decoder.decode(value, { stream: true });
+
+      // Update only the last bot message without removing previous ones
+      // setMessages((prev) =>
+      //   prev.map((msg, index) =>
+      //     index === prev.length - 1 && msg.role === "bot"
+      //       ? { ...msg, content: accumulatedText }
+      //       : msg
+      //   )
+      // );
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { role: "bot", content: accumulatedText },
+      ]);
+    }
+
+    setLoading(false);
+    setPrompt(""); // Clear input
+  };
+
+  const handleGenerates = async (prompt: string) => {
+    if (!prompt.trim()) return;
+    setLoading(true);
+
+    setMessages((prev) => [...prev, { role: "user", content: prompt }]);
+
+    await new Promise((resolve) => setTimeout(resolve, 0)); // Allow state update
+
+    console.log(messages); // Still logs old state due to React batching
+
+    const payload = { body: { userMessage: prompt, conversationId: "1234" } };
+
+    // Send request to backend
+    const response = await fetch(endpointData.automatedChatBot, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.body) {
+      console.error("Response body is empty.");
+      setLoading(false);
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let accumulatedText = "";
+
+    // Append an empty bot message first
+    setMessages((prev) => [...prev, { role: "bot", content: "" }]);
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      accumulatedText += decoder.decode(value, { stream: true });
+
+      // Update only the last bot message in place
+      setMessages((prev) => {
+        const lastMessage = prev[prev.length - 1];
+        if (lastMessage?.role === "bot") {
+          return [
+            ...prev.slice(0, -1),
+            { ...lastMessage, content: accumulatedText },
+          ];
+        }
+        return prev;
+      });
+    }
+
+    setLoading(false);
+    setPrompt(""); // Clear input
+  };
+
+  const uploadFile = async (prompt: string) => {
+    try {
+      const conversationId = generateId();
+      // Add user message before request
+      setMessages((prev) => [...prev, { role: "user", content: prompt }]);
+      const bodyPayload = {
+        body: { userMessage: prompt, conversationId: conversationId },
+      };
+
+      // Send request to backend
+      const response = await fetch(endpointData.automatedChatBot, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyPayload),
+      });
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = "";
+      let streamedReason = "";
+
+      // Add a "bot" response placeholder
+      // setMessages((prev) => [
+      //   ...prev,
+      //   {
+      //     role: "bot",
+      //     name: file.name,
+      //     size: file.size,
+      //     description: "",
+      //     status: "",
+      //     statusCode: 200,
+      //     flags: ["none"],
+      //     reason: "",
+      //     fraud_score: 20,
+      //   }, // Placeholder
+      // ]);
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulatedText += decoder.decode(value, { stream: true });
+
+        try {
+          // Try parsing JSON progressively
+          const json = JSON.parse(accumulatedText);
+          const body = json?.body || {};
+          const newBody = JSON.parse(body);
+          // Extract all required fields
+          const updatedData = {
+            statusCode: json?.statusCode ?? null,
+            conversationId: newBody?.conversationId ?? [],
+            conversation: newBody?.response ?? "No reason provided",
+          };
+
+          // Stream the "reason" field letter by letter for a typing effect
+          const targetConvo = updatedData.conversation;
+          if (streamedReason.length < targetConvo.length) {
+            for (let i = streamedReason.length; i < targetConvo.length; i++) {
+              setTimeout(() => {
+                streamedReason += targetConvo[i]; // Append each character
+                setMessages((prev) =>
+                  prev.map((msg, index) =>
+                    index === prev.length - 1 && msg.role === "bot"
+                      ? { ...msg, content: streamedReason }
+                      : msg
+                  )
+                );
+              }, i * 20); // Adjust typing speed (50ms per character)
+            }
+          }
+
+          // Update all fields except "reason" instantly
+          setMessages((prev) =>
+            prev.map((msg, index) =>
+              index === prev.length - 1 && msg.role === "bot"
+                ? { ...msg, ...updatedData, content: streamedReason }
+                : msg
+            )
+          );
+        } catch (error) {
+          // Ignore errors until JSON is fully parsed
+        }
+      }
+    } catch (error) {
+      console.error("Upload Error:", error);
+    }
+    setLoading(false);
+    setPrompt("");
+    handleClear();
   };
   return (
     <div className=" flex flex-col max-h-dvh font-[family-name:var(--font-jakarta-sans)] min-h-dvh relative ">
@@ -388,6 +587,7 @@ export default function Home() {
                   handleGenerate={() => {
                     // appState.forms.inputChange(prompt);
                     // navigate.push(`/more-features/document-processing`);
+                    handleGenerates(prompt);
                   }}
                   notFixedPosition
                 />

@@ -19,9 +19,11 @@ import {
 } from "iconsax-react";
 import HeaderComponent from "../../components/places/HeaderComponent";
 import { useRouter } from "next/navigation";
-import { models } from "../../constants/mock-data";
+import { aspectRatio, models } from "../../constants/mock-data";
 import Image from "next/image";
 import { div } from "framer-motion/client";
+import { endpointData } from "@/app/constants/endpointa";
+import { v4 as uuidv4 } from "uuid";
 
 export default function VirtualTryOn() {
   const [prompt, setPrompt] = useState("");
@@ -31,6 +33,7 @@ export default function VirtualTryOn() {
   );
   const [isDragging, setIsDragging] = useState(false);
   const navigate = useRouter();
+  const generateId = () => uuidv4();
 
   const handleGenerate = async () => {
     // if (!prompt.trim()) return;
@@ -40,7 +43,7 @@ export default function VirtualTryOn() {
     setMessages((prev) => [...prev, { role: "user", content: prompt }]);
 
     // Send request to backend
-    const response = await fetch("/api/prompt", {
+    const response = await fetch(endpointData.personalizedShopping, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt }),
@@ -111,6 +114,12 @@ export default function VirtualTryOn() {
     }
   };
 
+  const [formData, setFormData] = useState({
+    negativePrompt: "",
+    productService: "",
+    aspectRatio: "", // Assuming default empty or set to a default option
+    numImages: 50, // Default value of the slider
+  });
   const handleButtonClick = () => {
     fileInputRef.current?.click();
   };
@@ -140,6 +149,50 @@ export default function VirtualTryOn() {
   const handleDragLeave = () => {
     setIsDragging(false);
   };
+
+  const uploadFile = async (
+    file: File,
+    sessionId: string,
+    negativePrompt?: string,
+    serviceType?: string,
+    numberOfImages: string = "3",
+    sizeWithRatio: string = "1280 x 720 (16:9)"
+  ) => {
+    try {
+      if (!previewUrl) return;
+      const formData = new FormData();
+
+      formData.append("sessionId", sessionId); // Required
+      formData.append("image", file); // Required file upload
+      if (negativePrompt) formData.append("negativePrompt", negativePrompt);
+      if (serviceType) formData.append("serviceType", serviceType);
+      formData.append("numberOfImages", numberOfImages); // Default: 3
+      formData.append("sizeWithRatio", sizeWithRatio); // Default: 1280x720
+
+      const response = await fetch(endpointData.personalizedShopping, {
+        method: "POST",
+        headers: {
+          // **No need to manually set Content-Type, fetch will handle it**
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData, // Multipart form data payload
+      });
+
+      const result = await response.json();
+      console.log("Upload successful:", result);
+    } catch (error) {
+      console.error("Upload failed:", error);
+    }
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  console.log(formData);
+
   return (
     <div className=" h-[calc(100vh-71px)]">
       <HeaderComponent
@@ -154,18 +207,23 @@ export default function VirtualTryOn() {
             labelPlacement="outside"
             placeholder="Add negative prompt"
             variant="bordered"
-            name="negative prompt"
+            name="negativePrompt"
+            value={formData.negativePrompt}
+            onChange={handleChange}
             classNames={{
               inputWrapper: wrapperStyle,
               label: "text-sm",
             }}
           />
+
           <Input
             label="Product/Service"
             labelPlacement="outside"
-            name="product/service"
+            name="productService"
             placeholder="Product/Service"
-            className=" w-full my-3"
+            value={formData.productService}
+            onChange={handleChange}
+            className="w-full my-3"
             size="lg"
             classNames={{
               inputWrapper: wrapperStyle,
@@ -177,10 +235,17 @@ export default function VirtualTryOn() {
           <Select
             label="Size (px) / Aspect Ratio"
             labelPlacement="outside"
-            className=" text-black-slate-900 font-normal rounded-[8px] bg-gray-slate-200 w-full my-3"
-            items={models}
+            className="text-black-slate-900 font-normal rounded-[8px] bg-gray-slate-200 w-full my-3"
+            items={aspectRatio}
             placeholder="1280 x 720 (16:9)"
-            name="aspect ratio"
+            name="aspectRatio"
+            // selectedKeys={new Set([formData.aspectRatio])}
+            onChange={(key) =>
+              setFormData((prev) => ({
+                ...prev,
+                aspectRatio: key.target.value,
+              }))
+            }
             classNames={{
               trigger: selectInput,
               value: "text-black-slate-900",
@@ -202,12 +267,19 @@ export default function VirtualTryOn() {
           <Slider
             label="Numbers of Images"
             step={1}
-            maxValue={100}
-            minValue={0}
-            defaultValue={50}
+            maxValue={6}
+            minValue={1}
+            defaultValue={formData.numImages}
+            value={formData.numImages}
+            onChange={(value) =>
+              setFormData((prev) => ({
+                ...prev,
+                numImages: Array.isArray(value) ? value[0] : value,
+              }))
+            }
             showTooltip
             classNames={{
-              thumb: "bg-white border-1 border-black w-5 h-5", // Circular thumb with black border
+              thumb: "bg-white border-1 border-black w-5 h-5",
               track: "bg-[#D9D9D9]",
             }}
             tooltipProps={{ placement: "bottom" }}
@@ -220,6 +292,15 @@ export default function VirtualTryOn() {
               className="w-[247px] bg-blue-slate-600 text-white rounded-lg"
               disabled={loading}
               size="lg"
+              onPress={() =>
+                uploadFile(
+                  selectedFile as File,
+                  generateId(),
+                  formData.negativePrompt,
+                  formData.productService,
+                  formData.numImages.toString()
+                )
+              }
             >
               {loading ? <Spinner /> : "Regenerate"}
             </Button>
@@ -269,7 +350,7 @@ export default function VirtualTryOn() {
                       </span>{" "}
                       <span>or drag and drop</span>
                     </h4>
-                    <h4>PDF, DOC, DOCX and TXT</h4>
+                    <h4>JPEG, GIF, PNG and TIFF</h4>
                     <h4>Max. 20mb</h4>
                   </div>
                 </div>
@@ -307,19 +388,18 @@ export default function VirtualTryOn() {
                 />
               </div>
             )}
-            {!selectedFile && (
-              <div className="flex justify-end items-center my-4 mx-auto w-[540px]">
-                <Button
-                  type="submit"
-                  variant="flat"
-                  className="w-[247px] bg-blue-slate-600 text-white rounded-lg"
-                  disabled={loading}
-                  size="lg"
-                >
-                  {loading ? <Spinner /> : "Generate"}
-                </Button>
-              </div>
-            )}
+
+            <div className="flex justify-end items-center my-4 mx-auto w-[540px]">
+              <Button
+                type="submit"
+                variant="flat"
+                className="w-[247px] bg-blue-slate-600 text-white rounded-lg"
+                disabled={loading}
+                size="lg"
+              >
+                {loading ? <Spinner /> : "Generate"}
+              </Button>
+            </div>
           </div>
         </main>
       </div>

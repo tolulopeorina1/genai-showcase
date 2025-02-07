@@ -106,13 +106,17 @@ export default function Response() {
       accumulatedText += decoder.decode(value, { stream: true });
 
       // Update only the last bot message without removing previous ones
-      setMessages((prev) =>
-        prev.map((msg, index) =>
-          index === prev.length - 1 && msg.role === "bot"
-            ? { ...msg, content: accumulatedText }
-            : msg
-        )
-      );
+      // setMessages((prev) =>
+      //   prev.map((msg, index) =>
+      //     index === prev.length - 1 && msg.role === "bot"
+      //       ? { ...msg, content: accumulatedText }
+      //       : msg
+      //   )
+      // );
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { role: "bot", content: accumulatedText },
+      ]);
     }
 
     setLoading(false);

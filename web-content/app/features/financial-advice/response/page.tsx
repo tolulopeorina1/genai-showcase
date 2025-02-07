@@ -68,14 +68,35 @@ export default function Response() {
 
     // Wait for state update before fetching response
     await new Promise((resolve) => setTimeout(resolve, 0));
+    const toBase64 = (file: File): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const base64String = (reader.result as string).split(",")[1]; // Remove prefix
+          resolve(base64String);
+        };
+        reader.onerror = (error) => reject(error);
+      });
 
-    console.log(messages); // This will still log the old state
+    // const fileBase64 = await toBase64(file as File);
+
+    const bodypayload = {
+      body: {
+        prompt: prompt,
+        // document: {
+        //   filename: selectedFile?.name,
+        //   file: fileBase64,
+        //   mimetype: "text/plain",
+        // },
+      },
+    };
 
     // Send request to backend
     const response = await fetch(endpointData.financialAdvisor, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify(bodypayload),
     });
 
     const reader = response.body?.getReader();
@@ -105,18 +126,64 @@ export default function Response() {
     setPrompt(""); // Clear input
   };
 
+  const handleGenerates = async (prompt: string) => {
+    if (!prompt.trim()) return;
+    setLoading(true);
+
+    // Append user message
+    setMessages((prev) => [...prev, { role: "user", content: prompt }]);
+
+    // Send request to backend
+    const response = await fetch(endpointData.financialAdvisor, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    let accumulatedText = "";
+
+    let botMessage = { role: "bot", content: "" };
+    setMessages((prev) => [...prev, botMessage]); // Append an empty bot message first
+
+    while (reader) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      accumulatedText += chunk;
+
+      try {
+        // Attempt to parse the JSON from the accumulated text
+        const parsed = JSON.parse(accumulatedText);
+
+        if (parsed?.advice) {
+          let newText = parsed.advice
+            .map((item: { type: string; text: string }) => item.text)
+            .join("\n\n");
+
+          setMessages((prev) => [
+            ...prev.slice(0, -1), // Remove the last bot message
+            { role: "bot", content: newText }, // Append updated bot message
+          ]);
+        }
+      } catch (error) {
+        // JSON is incomplete, keep accumulating
+      }
+    }
+    console.log(messages);
+
+    setLoading(false);
+    setPrompt(""); // Clear input
+  };
+
   // Convert progress (0-100) to degrees (0-180)
   const progressDegrees = (progress / 100) * 180;
 
   const radius = 40;
   const circumference = Math.PI * radius; // ~125.6
   const progressOffset = circumference - (progress / 100) * circumference;
-
-  // // Calculate marker position using angle
-  // const angle = (progress / 100) * 180; // Converts 0-100% to 0-180 degrees
-  // const markerX = 50 + radius * Math.cos((angle - 180) * (Math.PI / 180)); // X Position
-  // const markerY = 50 + radius * Math.sin((angle - 180) * (Math.PI / 180)); // Y Position
-
   const angle = (progress / 100) * 180;
   const rotationAngle = angle - 90; // Adjust for proper tangent direction
   const markerX = 50 + radius * Math.cos((angle - 180) * (Math.PI / 180));
@@ -141,30 +208,6 @@ export default function Response() {
       <div className="">
         <div className=" px-4 sm:px-6">
           <div className=" my-[1rem] mx-auto max-w-[800px] p-4">
-            {/* <div>
-            <div className=" flex gap-x-3">
-              <div className=" bg-black-slate-800 rounded-full w-8 h-8 flex justify-center items-center">
-                <Cpu size="20" color="#E8EAED" />
-              </div>
-              <h3 className=" text-black-slate-900 font-semibold text-lg">
-                Heading
-              </h3>
-            </div>
-            <p className=" text-black-slate-900 font-normal ml-11">
-              Lorem ipsum dolor sit amet consectetur. Vitae eleifend imperdiet
-              id sed orci vestibulum augue tellus. Dictumst quisque eget metus
-              felis tortor. Augue scelerisque pellentesque scelerisque dui non
-              tincidunt pharetra. Interdum tortor suspendisse facilisi laoreet
-              interdum amet sit. Lacus ac pharetra adipiscing mattis. Pharetra
-              etiam diam arcu lectus sagittis pretium lectus. Lectus elit metus
-              enim urna ultricies quis egestas gravida enim. Faucibus vitae sit
-              scelerisque vel dignissim nunc nibh eu in. Id malesuada at
-              placerat ac quis risus risus. Vulputate leo ut eu elementum.
-              Turpis eget sed varius imperdiet sem facilisi dui. Faucibus sit
-              dui arcu blandit convallis tempor ut neque.
-            </p>
-          </div> */}
-
             {messages.map((message, i) => {
               if (message.role === "bot") {
                 return (
@@ -184,7 +227,7 @@ export default function Response() {
                         </p>
                       </div>
                     </div>
-                    <div
+                    {/* <div
                       className=" flex items-center gap-x-2 bg-gray-slate-100 w-[95px] rounded-[4px] p-1 cursor-pointer"
                       onClick={() => handleGenerate(messages[i - 1].content)}
                     >
@@ -192,7 +235,7 @@ export default function Response() {
                       <span className=" font-medium text-xs text-black-slate-900">
                         Regenerate
                       </span>
-                    </div>
+                    </div> */}
                   </div>
                 );
               } else {
@@ -210,7 +253,7 @@ export default function Response() {
               }
             })}
 
-            <div>
+            {/* <div>
               <div className=" flex justify-end mr-11">
                 <div className="  bg-gray-slate-200 border border-solid border-gray-slate-100 rounded-[10px] p-2 w-fit">
                   <div className=" flex gap-x-3 items-center">
@@ -274,7 +317,7 @@ export default function Response() {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             <div className=" flex items-center gap-x-2 bg-gray-slate-100 w-[130px] rounded-[4px] p-1 cursor-pointer mt-2">
               <PresentionChart size="20" color="#636C7E" />
@@ -299,7 +342,7 @@ export default function Response() {
         handleFileChange={handleFileChange}
         handleButtonClick={handleButtonClick}
         setPrompt={setPrompt}
-        handleGenerate={() => handleGenerate(prompt)}
+        handleGenerate={() => handleGenerates(prompt)}
         value={prompt}
       />
     </>

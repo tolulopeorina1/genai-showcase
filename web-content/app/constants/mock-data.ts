@@ -106,3 +106,21 @@ export const locations = [
   { name: "Yobe", id: "Yobe" },
   { name: "Zamfara", id: "Zamfara" },
 ];
+
+export const aspectRatio = [
+  {
+    id: "1920 x 1080",
+    name: "1920 x 1080",
+    key: "1920 x 1080",
+  },
+  {
+    id: "1280 x 720",
+    name: "1280 x 720",
+    key: "1280 x 720",
+  },
+  {
+    id: "640 x 480",
+    name: "640 x 480",
+    key: "640 x 480",
+  },
+];
