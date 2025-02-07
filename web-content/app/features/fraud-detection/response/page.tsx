@@ -74,126 +74,137 @@ export default function Response() {
 	//   }
 	// }, [selectedFile]);
 
-  const uploadFile = async (file: File, description: string) => {
-    try {
-      // Convert file to base64
-      const toBase64 = (file: File): Promise<string> =>
-        new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => {
-            const base64String = (reader.result as string).split(",")[1]; // Remove prefix
-            resolve(base64String);
-          };
-          reader.onerror = (error) => reject(error);
-        });
+	const uploadFile = async (file: File, description: string) => {
+		try {
+			// Convert file to base64
+			const toBase64 = (file: File): Promise<string> =>
+				new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.readAsDataURL(file);
+					reader.onload = () => {
+						const base64String = (reader.result as string).split(
+							','
+						)[1]; // Remove prefix
+						resolve(base64String);
+					};
+					reader.onerror = (error) => reject(error);
+				});
 
-      const fileBase64 = await toBase64(file);
+			const fileBase64 = await toBase64(file);
 
-      // Add user message before request
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "user",
-          name: file.name,
-          size: file.size,
-          description,
-          status: "",
-          statusCode: 200,
-          flags: ["none"],
-          reason: "",
-          fraud_score: 20,
-        },
-      ]);
+			// Add user message before request
+			setMessages((prev) => [
+				...prev,
+				{
+					role: 'user',
+					name: file.name,
+					size: file.size,
+					description,
+					status: '',
+					statusCode: 200,
+					flags: ['none'],
+					reason: '',
+					fraud_score: 20,
+				},
+			]);
 
-      // Send request to backend
-      const response = await fetch(endpointData.newFraudDetection, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          description,
-          file_name: file.name,
-          file_content: fileBase64,
-        }),
-      });
+			// Send request to backend
+			const response = await fetch(endpointData.newFraudDetection, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					description,
+					file_name: file.name,
+					file_content: fileBase64,
+				}),
+			});
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedText = "";
-      let streamedReason = "";
+			const reader = response.body?.getReader();
+			const decoder = new TextDecoder();
+			let accumulatedText = '';
+			let streamedReason = '';
 
-      // Add a "bot" response placeholder
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "bot",
-          name: file.name,
-          size: file.size,
-          description: "",
-          status: "",
-          statusCode: 200,
-          flags: ["none"],
-          reason: "",
-          fraud_score: 20,
-        }, // Placeholder
-      ]);
+			// Add a "bot" response placeholder
+			setMessages((prev) => [
+				...prev,
+				{
+					role: 'bot',
+					name: file.name,
+					size: file.size,
+					description: '',
+					status: '',
+					statusCode: 200,
+					flags: ['none'],
+					reason: '',
+					fraud_score: 20,
+				}, // Placeholder
+			]);
 
-      while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        accumulatedText += decoder.decode(value, { stream: true });
+			while (reader) {
+				const { done, value } = await reader.read();
+				if (done) break;
+				accumulatedText += decoder.decode(value, { stream: true });
 
-        try {
-          // Try parsing JSON progressively
-          const json = JSON.parse(accumulatedText);
-          const body = json?.body || {};
-          const newBody = JSON.parse(body);
-          // Extract all required fields
-          const updatedData = {
-            statusCode: json?.statusCode ?? null,
-            fraud_score: newBody?.fraud_score ?? null,
-            status: newBody?.status ?? "",
-            flags: newBody?.flags ?? [],
-            reason: newBody?.reason ?? "No reason provided",
-          };
-          console.log(typeof newBody);
+				try {
+					// Try parsing JSON progressively
+					const json = JSON.parse(accumulatedText);
+					const body = json?.body || {};
+					const newBody = JSON.parse(body);
+					// Extract all required fields
+					const updatedData = {
+						statusCode: json?.statusCode ?? null,
+						fraud_score: newBody?.fraud_score ?? null,
+						status: newBody?.status ?? '',
+						flags: newBody?.flags ?? [],
+						reason: newBody?.reason ?? 'No reason provided',
+					};
+					console.log(typeof newBody);
 
-          // Stream the "reason" field letter by letter for a typing effect
-          const targetReason = updatedData.reason;
-          if (streamedReason.length < targetReason.length) {
-            for (let i = streamedReason.length; i < targetReason.length; i++) {
-              setTimeout(() => {
-                streamedReason += targetReason[i]; // Append each character
-                setMessages((prev) =>
-                  prev.map((msg, index) =>
-                    index === prev.length - 1 && msg.role === "bot"
-                      ? { ...msg, reason: streamedReason }
-                      : msg
-                  )
-                );
-              }, i * 20); // Adjust typing speed (50ms per character)
-            }
-          }
+					// Stream the "reason" field letter by letter for a typing effect
+					const targetReason = updatedData.reason;
+					if (streamedReason.length < targetReason.length) {
+						for (
+							let i = streamedReason.length;
+							i < targetReason.length;
+							i++
+						) {
+							setTimeout(() => {
+								streamedReason += targetReason[i]; // Append each character
+								setMessages((prev) =>
+									prev.map((msg, index) =>
+										index === prev.length - 1 &&
+										msg.role === 'bot'
+											? { ...msg, reason: streamedReason }
+											: msg
+									)
+								);
+							}, i * 20); // Adjust typing speed (50ms per character)
+						}
+					}
 
-          // Update all fields except "reason" instantly
-          setMessages((prev) =>
-            prev.map((msg, index) =>
-              index === prev.length - 1 && msg.role === "bot"
-                ? { ...msg, ...updatedData, reason: streamedReason }
-                : msg
-            )
-          );
-        } catch (error) {
-          // Ignore errors until JSON is fully parsed
-        }
-      }
-    } catch (error) {
-      console.error("Upload Error:", error);
-    }
-    setLoading(false);
-    setPrompt("");
-    handleClear();
-  };
+					// Update all fields except "reason" instantly
+					setMessages((prev) =>
+						prev.map((msg, index) =>
+							index === prev.length - 1 && msg.role === 'bot'
+								? {
+										...msg,
+										...updatedData,
+										reason: streamedReason,
+								  }
+								: msg
+						)
+					);
+				} catch (error) {
+					// Ignore errors until JSON is fully parsed
+				}
+			}
+		} catch (error) {
+			console.error('Upload Error:', error);
+		}
+		setLoading(false);
+		setPrompt('');
+		handleClear();
+	};
 
 	return (
 		<>
@@ -298,26 +309,31 @@ export default function Response() {
 													{/* <span className=" font-medium text-xs text-black-slate-900">
                             View dashboard
                           </span> */}
-													<div className='flex justify-center items-center w-full'>
-														<Button
-															type='submit'
-															variant='flat'
-															className='font-medium text-xs text-black-slate-900 bg-none'
-															disabled={loading}
-															size='lg'
-															onPress={() => {
-																navigate.push(
-																	`${pathname}/dashboard`
-																);
-															}}
-														>
-															{loading ? (
-																<Spinner />
-															) : (
-																'View dashboard'
-															)}
-														</Button>
-													</div>
+
+													<Button
+														startContent={
+															<PresentionChart
+																size='20'
+																color='#636C7E'
+															/>
+														}
+														type='submit'
+														variant='flat'
+														className='font-medium text-xs text-black-slate-900 bg-gray-slate-100'
+														disabled={loading}
+														size='lg'
+														onPress={() => {
+															navigate.push(
+																`${pathname}/dashboard`
+															);
+														}}
+													>
+														{loading ? (
+															<Spinner />
+														) : (
+															'View dashboard'
+														)}
+													</Button>
 												</div>
 											</div>
 										</div>
