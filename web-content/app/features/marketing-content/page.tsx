@@ -24,6 +24,7 @@ export default function MarketingContent() {
   };
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -42,39 +43,6 @@ export default function MarketingContent() {
       fileInputRef.current.value = "";
     }
   };
-
-  const [progress, setProgress] = useState(80);
-
-  // Convert progress (0-100) to degrees (0-180)
-  const progressDegrees = (progress / 100) * 180;
-
-  const radius = 40;
-  const circumference = Math.PI * radius; // ~125.6
-  const progressOffset = circumference - (progress / 100) * circumference;
-  console.log(appState.forms.inputPrompt);
-  // // Calculate marker position using angle
-  // const angle = (progress / 100) * 180; // Converts 0-100% to 0-180 degrees
-  // const markerX = 50 + radius * Math.cos((angle - 180) * (Math.PI / 180)); // X Position
-  // const markerY = 50 + radius * Math.sin((angle - 180) * (Math.PI / 180)); // Y Position
-
-  const angle = (progress / 100) * 180;
-  const rotationAngle = angle - 90; // Adjust for proper tangent direction
-  const markerX = 50 + radius * Math.cos((angle - 180) * (Math.PI / 180));
-  const markerY = 50 + radius * Math.sin((angle - 180) * (Math.PI / 180));
-
-  const addProgress = () => {
-    setProgress((prev) => prev + 10);
-  };
-  const [rotation, setRotation] = useState(270); // Default to left
-
-  useEffect(() => {
-    const calculateRotation = (value: number): number => {
-      // Linear conversion: 0-100 → 270°-90° (180° total rotation)
-      return 270 + value * 1.8;
-    };
-    const newRotation = calculateRotation(progress);
-    setRotation(newRotation);
-  }, [progress]);
 
   return (
     <>
@@ -193,11 +161,42 @@ export default function MarketingContent() {
         handleFileChange={handleFileChange}
         handleButtonClick={handleButtonClick}
         setPrompt={setPrompt}
+        loading={loading}
         handleGenerate={() => {
+          setLoading(true);
           appState.forms.inputChange(prompt);
           navigate.push(`${pathname}/response`);
         }}
       />
+      {/* <FooterComponent
+              selectedFile={selectedFile}
+              handleClear={handleClear}
+              fileInputRef={fileInputRef}
+              handleFileChange={handleFileChange}
+              handleButtonClick={handleButtonClick}
+              setPrompt={handleTextFn}
+              errorMessage={errorMessage}
+              isInvalid={isInvalid}
+              loading={loading}
+              handleGenerate={() => {
+                if (!selectedFile) {
+                  setIsInvalid(true);
+                  return;
+                } else {
+                  setLoading(true);
+                  setIsInvalid(false);
+                  appState.forms.inputChange(prompt);
+                  setAppState((prevState) => ({
+                    ...prevState,
+                    forms: {
+                      ...prevState.forms,
+                      selectedFile,
+                    },
+                  }));
+                  navigate.push(`${pathname}/response`);
+                }
+              }}
+            /> */}
     </>
   );
 }

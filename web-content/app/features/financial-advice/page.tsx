@@ -24,16 +24,31 @@ export default function FinancialAdvice() {
   };
   const [prompt, setPrompt] = useState("");
   const pathname = usePathname();
-  const { appState } = useAppContext();
+  const { appState, setAppState } = useAppContext();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [errorMessage, setErrorMessage] = useState(
+    "Input search text and a .txt, .csv or .xlsx file to proceed"
+  );
+  const [isInvalid, setIsInvalid] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      setIsInvalid(false);
     }
+  };
+  const handleTextFn = (value: React.SetStateAction<string>) => {
+    if (!value || selectedFile === null) {
+      setIsInvalid(true);
+      setErrorMessage("Please select a .txt, .csv or .xlsx file to proceed");
+    } else {
+      setIsInvalid(false);
+      setErrorMessage("");
+    }
+    setPrompt(value);
   };
 
   const handleButtonClick = () => {
@@ -44,6 +59,8 @@ export default function FinancialAdvice() {
     setSelectedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+      setIsInvalid(true);
+      setErrorMessage("Please select a .txt, .csv or .xlsx file to proceed");
     }
   };
   return (
@@ -150,17 +167,33 @@ export default function FinancialAdvice() {
           />
         </div>
       </div>
-
       <FooterComponent
         selectedFile={selectedFile}
         handleClear={handleClear}
         fileInputRef={fileInputRef}
         handleFileChange={handleFileChange}
         handleButtonClick={handleButtonClick}
-        setPrompt={setPrompt}
+        setPrompt={handleTextFn}
+        errorMessage={errorMessage}
+        isInvalid={isInvalid}
+        loading={loading}
         handleGenerate={() => {
-          appState.forms.inputChange(prompt);
-          navigate.push(`${pathname}/response`);
+          if (!selectedFile) {
+            setIsInvalid(true);
+            return;
+          } else {
+            setLoading(true);
+            setIsInvalid(false);
+            appState.forms.inputChange(prompt);
+            setAppState((prevState) => ({
+              ...prevState,
+              forms: {
+                ...prevState.forms,
+                selectedFile,
+              },
+            }));
+            navigate.push(`${pathname}/response`);
+          }
         }}
       />
     </>
