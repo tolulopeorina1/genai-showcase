@@ -1,27 +1,18 @@
 "use client";
 import { Button } from "@heroui/button";
-import {
-  Modal,
-  ModalContent,
-  ModalBody,
-  useDisclosure,
-  Select,
-  SelectItem,
-} from "@heroui/react";
-import { Form, Input, Spinner } from "@heroui/react";
+import { Modal, ModalContent, ModalBody, useDisclosure } from "@heroui/react";
+import { Spinner } from "@heroui/react";
 import { useEffect, useRef, useState } from "react";
 import React from "react";
 import AlertComponent from "@/app/components/places/AlertComponent";
-import { locations, users } from "@/app/constants/mock-data";
-import { checkFraudApi } from "@/app/services/endpointServices";
 import { v4 as uuidv4 } from "uuid";
-import CardBox from "@/app/components/places/CardBox";
+import CardBox from "@/app/components/places/CardBoxGrid";
 import Link from "next/link";
 import FooterComponent from "@/app/components/places/Footer";
 import { usePathname, useRouter } from "next/navigation";
 import { useAppContext } from "@/app/context/StoreContext";
 import Image from "next/image";
-import architecture from "@/public/images/architecture.jpg";
+import architecture from "@/public/images/architecture/usecase1.png";
 
 export default function FraudPage() {
   const [errors, setErrors] = React.useState({});
@@ -54,10 +45,13 @@ export default function FraudPage() {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      setIsInvalid(false);
     }
   };
-  const [errorMessage, setErrorMessage] = useState("");
-  const [isInvalid, setIsInvalid] = useState(true);
+  const [errorMessage, setErrorMessage] = useState(
+    "Input search text and a .txt, .csv or .xlsx file to proceed"
+  );
+  const [isInvalid, setIsInvalid] = useState(false);
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
@@ -67,6 +61,8 @@ export default function FraudPage() {
     setSelectedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+      setIsInvalid(true);
+      setErrorMessage("Please select a .txt, .csv or .xlsx file to proceed");
     }
   };
   useEffect(() => {
@@ -77,20 +73,22 @@ export default function FraudPage() {
     const newRotation = calculateRotation(progress);
     setRotation(newRotation);
   }, [progress]);
-  useEffect(() => {
-    if (selectedFile === null) {
-      setErrorMessage("Please select a file to proceed");
+
+  const handleTextFn = (value: React.SetStateAction<string>) => {
+    if (!value || selectedFile === null) {
       setIsInvalid(true);
+      setErrorMessage("Please select a .txt, .csv or .xlsx file to proceed");
     } else {
-      setErrorMessage("");
       setIsInvalid(false);
+      setErrorMessage("");
     }
-  }, [appState.forms.inputPrompt, appState.forms.selectedFile, selectedFile]);
+    setPrompt(value);
+  };
 
   return (
     <>
       <div className="mb-8">
-        <div className=" flex flex-wrap gap-3">
+        <div className=" grid grid-cols-1 md:grid-cols-3 gap-3">
           <CardBox
             header="LLM in Amazon Bedrock: Anthropic Claude"
             children={
@@ -369,24 +367,29 @@ export default function FraudPage() {
         fileInputRef={fileInputRef}
         handleFileChange={handleFileChange}
         handleButtonClick={handleButtonClick}
-        setPrompt={setPrompt}
+        setPrompt={handleTextFn}
         errorMessage={errorMessage}
         isInvalid={isInvalid}
+        loading={loading}
         handleGenerate={() => {
-          if (isInvalid) return;
-          appState.forms.inputChange(prompt);
-          setAppState((prevState) => ({
-            ...prevState,
-            forms: {
-              ...prevState.forms,
-              selectedFile,
-            },
-          }));
-          navigate.push(`${pathname}/response`);
+          if (!selectedFile) {
+            setIsInvalid(true);
+            return;
+          } else {
+            setLoading(true);
+            setIsInvalid(false);
+            appState.forms.inputChange(prompt);
+            setAppState((prevState) => ({
+              ...prevState,
+              forms: {
+                ...prevState.forms,
+                selectedFile,
+              },
+            }));
+            navigate.push(`${pathname}/response`);
+          }
         }}
       />
     </>
   );
 }
-
-// translateX(-50%)

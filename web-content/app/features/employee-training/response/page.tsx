@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import { useAppContext } from "@/app/context/StoreContext";
 import { models } from "@/app/constants/mock-data";
 import FooterComponent from "@/app/components/places/Footer";
+import { endpointData } from "@/app/constants/endpointa";
 
 export default function Response() {
   const [errors, setErrors] = React.useState({});
@@ -86,10 +87,10 @@ export default function Response() {
     console.log(messages); // This will still log the old state
 
     // Send request to backend
-    const response = await fetch("/api/prompt", {
+    const response = await fetch(endpointData.aiTutorPost, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ message: prompt }),
     });
 
     const reader = response.body?.getReader();
@@ -119,6 +120,11 @@ export default function Response() {
     setPrompt(""); // Clear input
   };
 
+  const getResponse = async () => {
+    const response = await fetch(endpointData.aiTutorGet);
+    console.log(response);
+  };
+
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
   };
@@ -145,13 +151,12 @@ export default function Response() {
 
   useEffect(() => {
     const timeout = setTimeout(async () => {
+      await getResponse();
       await handleGenerate(appState.forms.inputPrompt); // Call the function after 2 seconds
     }, 2000);
 
     return () => clearTimeout(timeout); // Cleanup to prevent memory leaks
   }, []);
-
-  console.log(messages);
 
   return (
     <>

@@ -1,5 +1,5 @@
 import { models } from "@/app/constants/mock-data";
-import { Button, Input, Select, SelectItem } from "@heroui/react";
+import { Button, Input, Select, SelectItem, Spinner } from "@heroui/react";
 import {
   AttachCircle,
   Microphone2,
@@ -24,6 +24,7 @@ export default function FooterComponent({
   isInvalid,
   acceptTypes,
   notFixedPosition,
+  loading,
 }: {
   selectedFile: File | null;
   handleClear: () => void;
@@ -39,6 +40,7 @@ export default function FooterComponent({
   isInvalid?: boolean;
   acceptTypes?: string;
   notFixedPosition?: boolean;
+  loading?: boolean;
 }) {
   const wrapperStyle = [
     "bg-white",
@@ -123,7 +125,11 @@ export default function FooterComponent({
               type="button"
               onClick={handleGenerate}
             >
-              <Send2 size="20" color="#636C7E" />
+              {loading ? (
+                <Spinner size="sm" color="primary" />
+              ) : (
+                <Send2 size="20" color="#636C7E" />
+              )}
             </button>
           }
           placeholder="Ask me something you want to know"

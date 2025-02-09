@@ -1,5 +1,5 @@
 "use client";
-import { Button } from "@heroui/react";
+import { Button, Spinner } from "@heroui/react";
 import { useEffect, useRef, useState } from "react";
 import React from "react";
 import AlertComponent from "@/app/components/places/AlertComponent";
@@ -8,6 +8,8 @@ import { Add, Cpu, PresentionChart, User } from "iconsax-react";
 import FooterComponent from "@/app/components/places/Footer";
 import { endpointData } from "@/app/constants/endpointa";
 import Speedometer from "@/app/components/places/Speedometer";
+import { usePathname, useRouter } from "next/navigation";
+import { useAppContext } from "@/app/context/StoreContext";
 
 export default function Response() {
   const [errors, setErrors] = React.useState({});
@@ -34,6 +36,20 @@ export default function Response() {
       statusCode: number;
     }[]
   >([]);
+  const { appState } = useAppContext();
+  useEffect(() => {
+    const timeout = setTimeout(async () => {
+      await uploadFile(
+        appState.forms.selectedFile as File,
+        appState.forms.inputPrompt
+      ); // Call the function after 2 seconds
+    }, 2000);
+
+    return () => clearTimeout(timeout); // Cleanup to prevent memory leaks
+  }, []);
+
+  const navigate = useRouter();
+  const pathname = usePathname();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -72,6 +88,7 @@ export default function Response() {
 
   const uploadFile = async (file: File, description: string) => {
     try {
+      setLoading(true);
       // Convert file to base64
       const toBase64 = (file: File): Promise<string> =>
         new Promise((resolve, reject) => {
@@ -265,9 +282,21 @@ export default function Response() {
                               <li>{item}</li>
                             </ul>
                           ))}
-                        <div className=" flex items-center gap-x-2 bg-gray-slate-100 w-[130px] rounded-[4px] p-1 cursor-pointer mt-2">
-                          <PresentionChart size="20" color="#636C7E" />
+                        <div
+                          className=" flex items-center gap-x-2 bg-gray-slate-100 w-fit rounded-[4px] p-1 cursor-pointer mt-2"
+                          onClick={() => {
+                            setLoading(true);
+                            navigate.push(`${pathname}/dashboard`);
+                          }}
+                        >
                           <span className=" font-medium text-xs text-black-slate-900">
+                            {loading ? (
+                              <Spinner size="sm" color="primary" />
+                            ) : (
+                              <PresentionChart size="20" color="#636C7E" />
+                            )}
+                          </span>
+                          <span className=" w-fit text-xs font-medium">
                             View dashboard
                           </span>
                         </div>
@@ -294,11 +323,13 @@ export default function Response() {
         handleFileChange={handleFileChange}
         handleButtonClick={handleButtonClick}
         setPrompt={setPrompt}
+        loading={loading}
         handleGenerate={() => {
           if (!selectedFile) {
             setIsInvalid(true);
             return;
           } else {
+            setLoading(true);
             setIsInvalid(false);
             uploadFile(selectedFile as File, prompt);
           }
