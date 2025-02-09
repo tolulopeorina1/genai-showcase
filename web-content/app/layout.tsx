@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { HeroUIProviders } from "./providers";
 import { AppProviderComponent } from "./context/StoreContext";
+import ScreenSizeChecker from "./components/places/ScreenSizeChecker";
 const jakartaSans = Plus_Jakarta_Sans({
   variable: "--font-jakarta-sans",
   subsets: ["latin"],
@@ -28,7 +29,12 @@ export default function RootLayout({
         className={`${jakartaSans.variable} ${robotoMono.variable} antialiased font-[family-name:var(--font-jakarta-sans)] customScrollBar`}
       >
         <AppProviderComponent>
-          <HeroUIProviders>{children}</HeroUIProviders>
+          <HeroUIProviders>
+            <div>
+              {children}
+              <ScreenSizeChecker />
+            </div>
+          </HeroUIProviders>
         </AppProviderComponent>
       </body>
     </html>
