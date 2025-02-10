@@ -159,9 +159,11 @@ export default function VirtualReality() {
         handleButtonClick={handleButtonClick}
         setPrompt={setPrompt}
         handleGenerate={() => {
+          setLoading(true);
           appState.forms.inputChange(prompt);
           navigate.push(`/more-features/virtual-tryon`);
         }}
+        loading={loading}
       />
     </>
   );

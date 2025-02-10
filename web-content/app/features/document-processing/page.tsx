@@ -18,13 +18,16 @@ export default function DocumentProcessing() {
     responseType: "",
     responseMessage: "",
   });
+  const [errorMessage, setErrorMessage] = useState(
+    "Input search text and a PDF"
+  );
+  const [isInvalid, setIsInvalid] = useState(false);
   const navigate = useRouter();
   const toggleNotification = () => {
     setIsOpenRes(!isOpenRes);
   };
   const [prompt, setPrompt] = useState("");
-  const pathname = usePathname();
-  const { appState } = useAppContext();
+  const { appState, setAppState } = useAppContext();
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -33,6 +36,7 @@ export default function DocumentProcessing() {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      setIsInvalid(false);
     }
   };
 
@@ -44,7 +48,19 @@ export default function DocumentProcessing() {
     setSelectedFile(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+      setIsInvalid(true);
+      setErrorMessage("Please select a .pdf file to proceed");
     }
+  };
+  const handleTextFn = (value: React.SetStateAction<string>) => {
+    if (!value || selectedFile === null) {
+      setIsInvalid(true);
+      setErrorMessage("Please select a .pdf file to proceed");
+    } else {
+      setIsInvalid(false);
+      setErrorMessage("");
+    }
+    setPrompt(value);
   };
   return (
     <>
@@ -160,18 +176,35 @@ export default function DocumentProcessing() {
           />
         </div>
       </div>
-
       <FooterComponent
         selectedFile={selectedFile}
         handleClear={handleClear}
         fileInputRef={fileInputRef}
         handleFileChange={handleFileChange}
         handleButtonClick={handleButtonClick}
-        setPrompt={setPrompt}
+        setPrompt={handleTextFn}
+        errorMessage={errorMessage}
+        isInvalid={isInvalid}
+        loading={loading}
         handleGenerate={() => {
-          appState.forms.inputChange(prompt);
-          navigate.push(`/more-features/document-processing`);
+          if (!selectedFile) {
+            setIsInvalid(true);
+            return;
+          } else {
+            setLoading(true);
+            setIsInvalid(false);
+            appState.forms.inputChange(prompt);
+            setAppState((prevState) => ({
+              ...prevState,
+              forms: {
+                ...prevState.forms,
+                selectedFile,
+              },
+            }));
+            navigate.push(`/more-features/document-processing`);
+          }
         }}
+        acceptTypes=".pdf"
       />
     </>
   );

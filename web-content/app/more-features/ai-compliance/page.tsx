@@ -1,28 +1,14 @@
 "use client";
 
 import { useRef, useState } from "react";
-import {
-  Button,
-  Input,
-  Select,
-  SelectItem,
-  Textarea,
-  Slider,
-  Spinner,
-} from "@heroui/react";
-import {
-  ArrowLeft,
-  Cpu,
-  DocumentUpload,
-  Edit2,
-  TickCircle,
-  Trash,
-} from "iconsax-react";
+import { ArrowLeft, Cpu, TickCircle } from "iconsax-react";
 import HeaderComponent from "../../components/places/HeaderComponent";
 import { useRouter } from "next/navigation";
 import { models } from "../../constants/mock-data";
 import Image from "next/image";
 import { div } from "framer-motion/client";
+import { useAppContext } from "@/app/context/StoreContext";
+import { v4 as uuidv4 } from "uuid";
 
 export default function AiComplaince() {
   const [prompt, setPrompt] = useState("");
@@ -30,53 +16,138 @@ export default function AiComplaince() {
   const [messages, setMessages] = useState<{ role: string; content: string }[]>(
     []
   );
-  const [isDragging, setIsDragging] = useState(false);
   const navigate = useRouter();
+  const { appState } = useAppContext();
+  const generateId = () => uuidv4();
 
+  // const handleGenerate = async () => {
+  //   // if (!prompt.trim()) return;
+  //   setLoading(true);
+
+  //   // Append user message
+  //   setMessages((prev) => [...prev, { role: "user", content: prompt }]);
+
+  //   // Send request to backend
+  //   const response = await fetch(
+  //     "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev/regulatory-checker/upload-document-v2",
+  //     {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ prompt }),
+  //     }
+  //   );
+
+  //   const reader = response.body?.getReader();
+  //   const decoder = new TextDecoder();
+  //   let accumulatedText = "";
+
+  //   while (reader) {
+  //     const { done, value } = await reader.read();
+  //     if (done) break;
+  //     accumulatedText += decoder.decode(value, { stream: true });
+
+  //     // Update the last message progressively
+  //     setMessages((prev) => [
+  //       ...prev.slice(0, -1),
+  //       { role: "bot", content: accumulatedText },
+  //     ]);
+  //   }
+
+  //   setLoading(false);
+  //   setPrompt(""); // Clear input
+  // };
   const handleGenerate = async () => {
-    // if (!prompt.trim()) return;
     setLoading(true);
 
     // Append user message
     setMessages((prev) => [...prev, { role: "user", content: prompt }]);
 
+    await new Promise((resolve) => setTimeout(resolve, 0)); // Ensure state update
+
+    const toBase64 = (file: File): Promise<string> =>
+      new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const base64String = (reader.result as string).split(",")[1]; // Remove prefix
+          resolve(base64String);
+        };
+        reader.onerror = (error) => reject(error);
+      });
+
+    const fileBase64 = await toBase64(appState.forms.selectedFile as File);
+    const userId = generateId();
+
+    const bodyPayload = {
+      fileContent: fileBase64,
+      fileName: appState.forms.selectedFile?.name,
+      complianceStandard: "",
+      userId: userId,
+    };
     // Send request to backend
-    const response = await fetch("/api/prompt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
-    });
+    const response = await fetch(
+      "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev/regulatory-checker/upload-document-v2",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyPayload),
+      }
+    );
 
     const reader = response.body?.getReader();
     const decoder = new TextDecoder();
     let accumulatedText = "";
 
+    let botMessage = { role: "bot", content: "" };
+
+    // Append an empty bot message first
+    setMessages((prev) => [...prev, botMessage]);
+
     while (reader) {
       const { done, value } = await reader.read();
       if (done) break;
-      accumulatedText += decoder.decode(value, { stream: true });
 
-      // Update the last message progressively
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { role: "bot", content: accumulatedText },
-      ]);
+      // Decode streamed chunk
+      const chunk = decoder.decode(value, { stream: true });
+
+      // Parse JSON response chunk (assuming streaming JSON format)
+      try {
+        const json = JSON.parse(chunk);
+        if (json.response) {
+          const text = json.response;
+
+          for (let i = 0; i < text.length; i++) {
+            accumulatedText += text[i]; // Add one character at a time
+
+            // Smooth typing effect update
+            await new Promise((resolve) => setTimeout(resolve, 30)); // Adjust speed here
+
+            setMessages((prev) =>
+              prev.map((msg, index) =>
+                index === prev.length - 1 && msg.role === "bot"
+                  ? { ...msg, content: accumulatedText }
+                  : msg
+              )
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error parsing JSON:", error);
+      }
     }
 
     setLoading(false);
     setPrompt(""); // Clear input
   };
 
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
-
-  const postData = async () => {
-    const response = await fetch("api/prompt/route", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: "Test prompt" }),
-    });
+  const getData = async () => {
+    const response = await fetch(
+      "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev/regulatory-checker/get-report",
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
     const data = await response.json();
     console.log(data);
   };
@@ -84,64 +155,6 @@ export default function AiComplaince() {
   const goBack = () => {
     navigate.back();
   };
-  const wrapperStyle = [
-    "bg-white",
-    "placeholder:text-gray-slate-400 dark:placeholder:text-white/60",
-    "border border-solid border-gray-slate-300 rounded-[8px]",
-  ];
-  const selectInput = [
-    "placeholder:text-black-slate-900",
-    "border border-solid border-gray-slate-300 rounded-[8px] bg-gray-slate-200",
-  ];
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-
-      // Check if file is an image and generate preview URL
-      if (file.type.startsWith("image/")) {
-        const imageUrl = URL.createObjectURL(file);
-        setPreviewUrl(imageUrl);
-      } else {
-        setPreviewUrl(null);
-      }
-    }
-  };
-
-  const handleButtonClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleClear = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-  // Handle drag-and-drop file selection
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    if (event.dataTransfer.files.length > 0) {
-      setSelectedFile(event.dataTransfer.files[0]);
-    }
-  };
-
-  // Prevent default behavior for drag events
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
   const compliance = ["GDRP", "HIPAA", "CIS"];
   const [activeComplaince, setActiveComplaince] = useState("GDRP");
   return (
@@ -191,6 +204,8 @@ export default function AiComplaince() {
 
             <div></div>
           </header>
+          <button onClick={() => handleGenerate()}>checkendpoint</button>
+          <button onClick={() => getData()}>get data</button>
 
           <div className=" my-[1rem] mx-auto max-w-[700px] p-4">
             {/* {messages.map((message, i) => {

@@ -28,9 +28,7 @@ export default function AiCompliance() {
     responseMessage: "",
   });
   const navigate = useRouter();
-  const [prompt, setPrompt] = useState("");
-  const pathname = usePathname();
-  const { appState } = useAppContext();
+  const { setAppState } = useAppContext();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -75,38 +73,6 @@ export default function AiCompliance() {
     setIsDragging(false);
   };
 
-  const [progress, setProgress] = useState(80);
-
-  // Convert progress (0-100) to degrees (0-180)
-  const progressDegrees = (progress / 100) * 180;
-
-  const radius = 40;
-  const circumference = Math.PI * radius; // ~125.6
-  const progressOffset = circumference - (progress / 100) * circumference;
-  console.log(appState.forms.inputPrompt);
-  // // Calculate marker position using angle
-  // const angle = (progress / 100) * 180; // Converts 0-100% to 0-180 degrees
-  // const markerX = 50 + radius * Math.cos((angle - 180) * (Math.PI / 180)); // X Position
-  // const markerY = 50 + radius * Math.sin((angle - 180) * (Math.PI / 180)); // Y Position
-
-  const angle = (progress / 100) * 180;
-  const rotationAngle = angle - 90; // Adjust for proper tangent direction
-  const markerX = 50 + radius * Math.cos((angle - 180) * (Math.PI / 180));
-  const markerY = 50 + radius * Math.sin((angle - 180) * (Math.PI / 180));
-
-  const addProgress = () => {
-    setProgress((prev) => prev + 10);
-  };
-  const [rotation, setRotation] = useState(270); // Default to left
-
-  useEffect(() => {
-    const calculateRotation = (value: number): number => {
-      // Linear conversion: 0-100 → 270°-90° (180° total rotation)
-      return 270 + value * 1.8;
-    };
-    const newRotation = calculateRotation(progress);
-    setRotation(newRotation);
-  }, [progress]);
   const selectInput = [
     "placeholder:text-black-slate-900",
     "border border-solid border-gray-slate-100 rounded-[168px] bg-gray-slate-200",
@@ -297,7 +263,7 @@ export default function AiCompliance() {
                                 </span>{" "}
                                 <span>or drag and drop</span>
                               </h4>
-                              <h4>PDF, DOC, DOCX and TXT</h4>
+                              <h4>PDF or TXT</h4>
                               <h4>Max. 20mb</h4>
                             </div>
                           </>
@@ -336,6 +302,7 @@ export default function AiCompliance() {
                         onChange={handleFileChange}
                         name="media"
                         id="file-upload"
+                        accept=" .txt, .pdf"
                       />
                     </div>
 
@@ -346,9 +313,18 @@ export default function AiCompliance() {
                         className="w-[157px] bg-blue-slate-600 text-white rounded-lg"
                         disabled={loading}
                         size="lg"
-                        onPress={() =>
-                          navigate.push(`/more-features/ai-compliance`)
-                        }
+                        onPress={() => {
+                          if (!selectedFile) return;
+                          setLoading(true);
+                          setAppState((prevState) => ({
+                            ...prevState,
+                            forms: {
+                              ...prevState.forms,
+                              selectedFile,
+                            },
+                          }));
+                          navigate.push(`/more-features/ai-compliance`);
+                        }}
                       >
                         {loading ? <Spinner /> : "Proceed"}
                       </Button>

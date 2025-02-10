@@ -1,28 +1,13 @@
 "use client";
 
-import { useRef, useState } from "react";
-import {
-  Button,
-  Input,
-  Select,
-  SelectItem,
-  Textarea,
-  Slider,
-  Spinner,
-} from "@heroui/react";
-import {
-  ArrowLeft,
-  Cpu,
-  DocumentUpload,
-  Edit2,
-  TickCircle,
-  Trash,
-} from "iconsax-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Cpu } from "iconsax-react";
 import HeaderComponent from "../../components/places/HeaderComponent";
 import { useRouter } from "next/navigation";
-import { models } from "../../constants/mock-data";
 import Image from "next/image";
 import pdfReader from "@/public/images/PDF Reader.png";
+import { useAppContext } from "@/app/context/StoreContext";
+import { endpointData } from "@/app/constants/endpointa";
 
 export default function DocumentProcessing() {
   const [prompt, setPrompt] = useState("");
@@ -31,6 +16,7 @@ export default function DocumentProcessing() {
     []
   );
   const [isDragging, setIsDragging] = useState(false);
+  const { appState, setAppState } = useAppContext();
   const navigate = useRouter();
 
   const handleGenerate = async () => {
@@ -38,14 +24,28 @@ export default function DocumentProcessing() {
     setLoading(true);
 
     // Append user message
-    setMessages((prev) => [...prev, { role: "user", content: prompt }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", content: appState.forms.inputPrompt },
+    ]);
+    const bodyPayload = {
+      prompt: appState.forms.inputPrompt,
+      object_key: appState.forms.selectedFile,
+      bucket_name: "cil-gen-ai-use-cases",
+    };
 
+    // endpointData.documentSummary
     // Send request to backend
-    const response = await fetch("/api/prompt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
-    });
+    const response = await fetch(
+      "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev/textract-gen-ai",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bodyPayload),
+      }
+    );
+
+    console.log(response);
 
     const reader = response.body?.getReader();
     const decoder = new TextDecoder();
@@ -141,6 +141,68 @@ export default function DocumentProcessing() {
   const handleDragLeave = () => {
     setIsDragging(false);
   };
+
+  const handleGenerates = async (prompt: string) => {
+    if (!prompt.trim()) return;
+    setLoading(true);
+
+    // Append user message
+    setMessages((prev) => [...prev, { role: "user", content: prompt }]);
+
+    // Wait for state update before fetching response
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    console.log(messages); // This will still log the old state
+
+    // Send request to backend
+    const response = await fetch("/api/prompt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt }),
+    });
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+    let accumulatedText = "";
+
+    let botMessage = { role: "bot", content: "" };
+
+    setMessages((prev) => [...prev, botMessage]); // Append an empty bot message first
+
+    while (reader) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      accumulatedText += decoder.decode(value, { stream: true });
+
+      // Update only the last bot message without removing previous ones
+      // setMessages((prev) =>
+      //   prev.map((msg, index) =>
+      //     index === prev.length - 1 && msg.role === "bot"
+      //       ? { ...msg, content: accumulatedText }
+      //       : msg
+      //   )
+      // );
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { role: "bot", content: accumulatedText },
+      ]);
+    }
+
+    setLoading(false);
+    setPrompt(""); // Clear input
+  };
+
+  useEffect(() => {
+    // const timeout = setTimeout(async () => {
+    //   await uploadFile(
+    //     appState.forms.selectedFile as File,
+    //     appState.forms.inputPrompt
+    //   ); // Call the function after 2 seconds
+    // }, 2000);
+
+    // return () => clearTimeout(timeout); // Cleanup to prevent memory leaks
+    console.log(appState.forms.inputPrompt, appState.forms.selectedFile);
+  }, []);
   return (
     <>
       <div className="">
@@ -200,6 +262,7 @@ export default function DocumentProcessing() {
                 <h3 className=" text-black-slate-900 font-semibold text-lg ml-11">
                   Heading
                 </h3>
+                <button onClick={() => handleGenerate()}>test api</button>
                 <p className=" text-black-slate-900 font-normal ml-11">
                   Lorem ipsum dolor sit amet consectetur. Vitae eleifend
                   imperdiet id sed orci vestibulum augue tellus. Dictumst

@@ -168,35 +168,6 @@ export default function MarketingContent() {
           navigate.push(`${pathname}/response`);
         }}
       />
-      {/* <FooterComponent
-              selectedFile={selectedFile}
-              handleClear={handleClear}
-              fileInputRef={fileInputRef}
-              handleFileChange={handleFileChange}
-              handleButtonClick={handleButtonClick}
-              setPrompt={handleTextFn}
-              errorMessage={errorMessage}
-              isInvalid={isInvalid}
-              loading={loading}
-              handleGenerate={() => {
-                if (!selectedFile) {
-                  setIsInvalid(true);
-                  return;
-                } else {
-                  setLoading(true);
-                  setIsInvalid(false);
-                  appState.forms.inputChange(prompt);
-                  setAppState((prevState) => ({
-                    ...prevState,
-                    forms: {
-                      ...prevState.forms,
-                      selectedFile,
-                    },
-                  }));
-                  navigate.push(`${pathname}/response`);
-                }
-              }}
-            /> */}
     </>
   );
 }

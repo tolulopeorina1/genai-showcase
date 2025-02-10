@@ -167,9 +167,11 @@ export default function Response() {
             fraud_score: newBody?.fraud_score ?? null,
             status: newBody?.status ?? "",
             flags: newBody?.flags ?? [],
-            reason: newBody?.reason ?? "No reason provided",
+            reason:
+              newBody?.reason ??
+              "Please provide a file with an actual transaction.",
           };
-          console.log(typeof newBody);
+          console.log(body);
 
           // Stream the "reason" field letter by letter for a typing effect
           const targetReason = updatedData.reason;

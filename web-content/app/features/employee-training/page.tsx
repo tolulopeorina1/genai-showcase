@@ -341,9 +341,9 @@ export default function EmployeeTraining() {
         handleFileChange={handleFileChange}
         handleButtonClick={handleButtonClick}
         setPrompt={setPrompt}
-        // errorMessage={errorMessage}
-        // isInvalid={isInvalid}
+        loading={loading}
         handleGenerate={() => {
+          setLoading(true);
           // if (isInvalid) return;
           appState.forms.inputChange(prompt);
           setAppState((prevState) => ({
@@ -355,10 +355,6 @@ export default function EmployeeTraining() {
           }));
           navigate.push(`${pathname}/response`);
         }}
-        // handleGenerate={() => {
-        //   appState.forms.inputChange(prompt);
-        //   navigate.push(`${pathname}/response`);
-        // }}
       />
     </>
   );

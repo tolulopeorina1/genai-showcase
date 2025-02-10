@@ -333,8 +333,12 @@ export default function Home() {
           Cecure Intelligence Limited - Gen AI Showcase
         </h1>
         <div className=" flex gap-x-4 items-center">
-          <Image src={logo} alt="logo" width={38} height={38} />
-          <Image src={awsPartner} alt="logo" width={38} height={38} />
+          <Link href={"https://cecureintel.com/"} target="_blank">
+            <Image src={logo} alt="logo" width={38} height={38} />
+          </Link>
+          <Link href={"https://cecureintel.com/aws"} target="_blank">
+            <Image src={awsPartner} alt="logo" width={38} height={38} />
+          </Link>
         </div>
       </header>
       <main className="px-8 py-4 overflow-y-auto pb-[100px]">

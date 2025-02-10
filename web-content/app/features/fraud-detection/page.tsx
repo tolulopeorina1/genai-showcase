@@ -389,6 +389,7 @@ export default function FraudPage() {
             navigate.push(`${pathname}/response`);
           }
         }}
+        acceptTypes=" .txt, .csv, .xlsx"
       />
     </>
   );

@@ -24,64 +24,19 @@ import Image from "next/image";
 import { div } from "framer-motion/client";
 import { endpointData } from "@/app/constants/endpointa";
 import { v4 as uuidv4 } from "uuid";
+import { motion } from "framer-motion";
+import imageCompression from "browser-image-compression";
 
 export default function VirtualTryOn() {
-  const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [messages, setMessages] = useState<{ role: string; content: string }[]>(
-    []
-  );
   const [isDragging, setIsDragging] = useState(false);
   const navigate = useRouter();
   const generateId = () => uuidv4();
-
-  const handleGenerate = async () => {
-    // if (!prompt.trim()) return;
-    setLoading(true);
-
-    // Append user message
-    setMessages((prev) => [...prev, { role: "user", content: prompt }]);
-
-    // Send request to backend
-    const response = await fetch(endpointData.personalizedShopping, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt }),
-    });
-
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
-    let accumulatedText = "";
-
-    while (reader) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      accumulatedText += decoder.decode(value, { stream: true });
-
-      // Update the last message progressively
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { role: "bot", content: accumulatedText },
-      ]);
-    }
-
-    setLoading(false);
-    setPrompt(""); // Clear input
-  };
-
-  const handleCopy = (text: string) => {
-    navigator.clipboard.writeText(text);
-  };
-
-  const postData = async () => {
-    const response = await fetch("api/prompt/route", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: "Test prompt" }),
-    });
-    const data = await response.json();
-    console.log(data);
-  };
+  const [returnedImages, setReturnedImages] = useState<string[]>([]);
+  const [isGeneratedImage, setIsGenerate] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const goBack = () => {
     navigate.back();
@@ -95,9 +50,6 @@ export default function VirtualTryOn() {
     "placeholder:text-black-slate-900",
     "border border-solid border-gray-slate-300 rounded-[8px] bg-gray-slate-200",
   ];
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -150,6 +102,53 @@ export default function VirtualTryOn() {
     setIsDragging(false);
   };
 
+  // Function to resize the image
+  const resizeImage = async (
+    file: File,
+    minWidth: number = 320,
+    minHeight: number = 320,
+    maxWidth: number = 4096,
+    maxHeight: number = 4096
+  ) => {
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+
+    await new Promise((resolve) => {
+      img.onload = resolve;
+    });
+
+    let targetWidth = img.width;
+    let targetHeight = img.height;
+
+    // Scale up if the image is smaller than the minimum dimensions
+    if (targetWidth < minWidth || targetHeight < minHeight) {
+      const scale = Math.max(minWidth / targetWidth, minHeight / targetHeight);
+      targetWidth = Math.round(targetWidth * scale);
+      targetHeight = Math.round(targetHeight * scale);
+    }
+
+    // Scale down if the image is larger than the maximum dimensions
+    if (targetWidth > maxWidth || targetHeight > maxHeight) {
+      const scale = Math.min(maxWidth / targetWidth, maxHeight / targetHeight);
+      targetWidth = Math.round(targetWidth * scale);
+      targetHeight = Math.round(targetHeight * scale);
+    }
+
+    // Use browser-image-compression to resize the image
+    const options = {
+      maxWidthOrHeight: Math.max(targetWidth, targetHeight), // Resize to fit within the target dimensions
+      useWebWorker: true,
+    };
+
+    try {
+      const compressedFile = await imageCompression(file, options);
+      return compressedFile;
+    } catch (error) {
+      console.error("Error resizing image:", error);
+      throw error;
+    }
+  };
+
   const uploadFile = async (
     file: File,
     sessionId: string,
@@ -160,28 +159,40 @@ export default function VirtualTryOn() {
   ) => {
     try {
       if (!previewUrl) return;
+      setLoading(true);
       const formData = new FormData();
+      const resizedImage = await resizeImage(file, 640, 640, 640, 640);
+      console.log(resizedImage, file);
 
       formData.append("sessionId", sessionId); // Required
-      formData.append("image", file); // Required file upload
+      formData.append("image", resizedImage); // Required file upload
       if (negativePrompt) formData.append("negativePrompt", negativePrompt);
       if (serviceType) formData.append("serviceType", serviceType);
       formData.append("numberOfImages", numberOfImages); // Default: 3
       formData.append("sizeWithRatio", sizeWithRatio); // Default: 1280x720
+      console.log(formData);
 
-      const response = await fetch(endpointData.personalizedShopping, {
-        method: "POST",
-        headers: {
-          // **No need to manually set Content-Type, fetch will handle it**
-          "Content-Type": "multipart/form-data",
-        },
-        body: formData, // Multipart form data payload
-      });
+      const response = await fetch(
+        "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev/personalized-product-images/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const result = await response.json();
       console.log("Upload successful:", result);
+      if (result?.imagePaths.length > 0) {
+        setReturnedImages(result?.imagePaths);
+        setIsGenerate(true);
+      } else {
+        setIsGenerate(false);
+      }
     } catch (error) {
       console.error("Upload failed:", error);
+      setIsGenerate(false);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -191,7 +202,6 @@ export default function VirtualTryOn() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-  console.log(formData);
 
   return (
     <div className=" h-[calc(100vh-71px)]">
@@ -285,26 +295,34 @@ export default function VirtualTryOn() {
             tooltipProps={{ placement: "bottom" }}
             hideValue
           />
-          <div className="items-center my-3 mt-auto">
-            <Button
-              type="submit"
-              variant="flat"
-              className="w-[247px] bg-blue-slate-600 text-white rounded-lg"
-              disabled={loading}
-              size="lg"
-              onPress={() =>
-                uploadFile(
-                  selectedFile as File,
-                  generateId(),
-                  formData.negativePrompt,
-                  formData.productService,
-                  formData.numImages.toString()
-                )
-              }
+
+          {selectedFile && (
+            <motion.div
+              className="items-center my-3 mt-auto"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
             >
-              {loading ? <Spinner /> : "Regenerate"}
-            </Button>
-          </div>
+              <Button
+                type="submit"
+                variant="flat"
+                className="w-[247px] bg-blue-slate-600 text-white rounded-lg"
+                disabled={loading}
+                size="lg"
+                onPress={() =>
+                  uploadFile(
+                    selectedFile as File,
+                    generateId(),
+                    formData.negativePrompt,
+                    formData.productService,
+                    formData.numImages.toString()
+                  )
+                }
+              >
+                {loading ? <Spinner /> : "Regenerate"}
+              </Button>
+            </motion.div>
+          )}
         </aside>
 
         {/* Chat Section */}
@@ -324,9 +342,9 @@ export default function VirtualTryOn() {
             <div></div>
           </header>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            <div className="  w-full">
-              {!selectedFile && (
+          {!isGeneratedImage ? (
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="  w-full">
                 <div
                   className={` flex justify-center flex-col gap-x-3 m-auto w-[540px] h-[264px] border-[1.5px] border-dashed border-[#D0D5DD] rounded-2xl ${
                     isDragging
@@ -337,49 +355,60 @@ export default function VirtualTryOn() {
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                 >
-                  <div className=" flex justify-center items-center w-12 h-12 rounded-full bg-gray-slate-50 mx-auto">
-                    <DocumentUpload size="20" color="#484F5B" />
-                  </div>
-                  <div className=" text-center">
-                    <h4 className=" text-black-slate-900 font-normal">
-                      <span
-                        className=" cursor-pointer text-blue-slate-500 font-semibold"
-                        onClick={handleButtonClick}
+                  {!selectedFile && (
+                    <>
+                      <div className=" flex justify-center items-center w-12 h-12 rounded-full bg-gray-slate-50 mx-auto">
+                        <DocumentUpload size="20" color="#484F5B" />
+                      </div>
+                      <div className=" text-center">
+                        <h4 className=" text-black-slate-900 font-normal">
+                          <span
+                            className=" cursor-pointer text-blue-slate-500 font-semibold"
+                            onClick={handleButtonClick}
+                          >
+                            Click to upload
+                          </span>{" "}
+                          <span>or drag and drop</span>
+                        </h4>
+                        <h4>JPEG, GIF, PNG and TIFF</h4>
+                        <h4>Max. 20mb</h4>
+                      </div>
+                    </>
+                  )}
+                  {selectedFile && (
+                    <div className=" flex gap-x-3 flex-col justify-center items-center">
+                      <div className=" flex justify-center items-center w-12 h-12 rounded-full bg-gray-slate-25">
+                        <TickCircle size="20" color="#10B981" variant="Bold" />
+                      </div>
+                      <div className=" text-center">
+                        <h4 className=" text-black-slate-900 font-semibold my-2">
+                          {selectedFile.name}
+                        </h4>
+                        <h4 className=" text-gray-slate-500 text-sm font-medium">
+                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </h4>
+                      </div>
+                      <div
+                        className=" mx-auto cursor-pointer my-2"
+                        onClick={handleClear}
                       >
-                        Click to upload
-                      </span>{" "}
-                      <span>or drag and drop</span>
-                    </h4>
-                    <h4>JPEG, GIF, PNG and TIFF</h4>
-                    <h4>Max. 20mb</h4>
-                  </div>
+                        <Trash size="20" color="#DC2626" />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              {/* {selectedFile && (
-                <div className=" flex gap-x-3">
-                  <div className=" flex justify-center items-center w-12 h-12 rounded-full bg-gray-slate-25">
-                    <TickCircle size="20" color="#10B981" variant="Bold" />
-                  </div>
-                  <div>
-                    <h4 className=" text-black-slate-900 font-semibold">
-                      {selectedFile.name}
-                    </h4>
-                    <h4 className=" text-gray-slate-500 text-sm font-medium">
-                      {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
-                    </h4>
-                  </div>
-                </div>
-              )} */}
-              <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                onChange={handleFileChange}
-                name="media"
-                id="file-upload"
-              />
-            </div>
-            {previewUrl && (
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleFileChange}
+                  name="media"
+                  id="file-upload"
+                  accept=" .jpeg, .jpg"
+                />
+              </div>
+              {/* {previewUrl && (
               <div className="w-full max-h-[25rem] flex items-center justify-center overflow-hidden border rounded-[17px]">
                 <img
                   src={previewUrl}
@@ -387,20 +416,49 @@ export default function VirtualTryOn() {
                   className="max-w-full h-auto object-contain"
                 />
               </div>
-            )}
+            )} */}
 
-            <div className="flex justify-end items-center my-4 mx-auto w-[540px]">
-              <Button
-                type="submit"
-                variant="flat"
-                className="w-[247px] bg-blue-slate-600 text-white rounded-lg"
-                disabled={loading}
-                size="lg"
-              >
-                {loading ? <Spinner /> : "Generate"}
-              </Button>
+              {selectedFile && (
+                <motion.div
+                  className="flex justify-end items-center my-4 mx-auto w-[540px]"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <Button
+                    type="submit"
+                    variant="flat"
+                    className="w-[247px] bg-blue-slate-600 text-white rounded-lg"
+                    disabled={loading}
+                    size="lg"
+                    onPress={() =>
+                      uploadFile(
+                        selectedFile as File,
+                        generateId(),
+                        formData.negativePrompt,
+                        formData.productService,
+                        formData.numImages.toString()
+                      )
+                    }
+                  >
+                    {loading ? <Spinner /> : "Generate"}
+                  </Button>
+                </motion.div>
+              )}
             </div>
-          </div>
+          ) : (
+            <div className=" flex items-center justify-center flex-wrap">
+              {returnedImages.map((item) => (
+                <img
+                  src={item}
+                  alt={item}
+                  key={item}
+                  width={400}
+                  className=" min-w-[300px] max-w-[420px] "
+                />
+              ))}
+            </div>
+          )}
         </main>
       </div>
     </div>
