@@ -193,16 +193,156 @@ export default function DocumentProcessing() {
   };
 
   useEffect(() => {
-    // const timeout = setTimeout(async () => {
-    //   await uploadFile(
-    //     appState.forms.selectedFile as File,
-    //     appState.forms.inputPrompt
-    //   ); // Call the function after 2 seconds
-    // }, 2000);
+    const timeout = setTimeout(async () => {
+      await uploadFile(
+        appState.forms.selectedFile as File,
+        appState.forms.inputPrompt
+      ); // Call the function after 2 seconds
+    }, 2000);
 
-    // return () => clearTimeout(timeout); // Cleanup to prevent memory leaks
+    return () => clearTimeout(timeout); // Cleanup to prevent memory leaks
     console.log(appState.forms.inputPrompt, appState.forms.selectedFile);
   }, []);
+
+  const uploadFile = async (file: File, description: string) => {
+    try {
+      setLoading(true);
+      // Convert file to base64
+      const toBase64 = (file: File): Promise<string> =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const base64String = (reader.result as string).split(",")[1]; // Remove prefix
+            resolve(base64String);
+          };
+          reader.onerror = (error) => reject(error);
+        });
+
+      const fileBase64 = await toBase64(file);
+
+      // Add user message before request
+      // setMessages((prev) => [
+      //   ...prev,
+      //   {
+      //     role: "user",
+      //     name: file.name,
+      //     size: file.size,
+      //     description,
+      //     status: "",
+      //     statusCode: 200,
+      //     flags: ["none"],
+      //     reason: "",
+      //     fraud_score: 20,
+      //   },
+      // ]);
+      const payloadbody = {
+        role: "user",
+        content: [
+          {
+            document: {
+              name: file.name,
+              format: file.type,
+              source: {
+                bytes: fileBase64,
+              },
+            },
+          },
+          { text: description },
+        ],
+      };
+
+      // Send request to backend
+      const response = await fetch(
+        "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev/textract-gen-ai",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payloadbody),
+        }
+      );
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = "";
+      let streamedReason = "";
+
+      // Add a "bot" response placeholder
+      // setMessages((prev) => [
+      //   ...prev,
+      //   {
+      //     role: "bot",
+      //     name: file.name,
+      //     size: file.size,
+      //     description: "",
+      //     status: "",
+      //     statusCode: 200,
+      //     flags: ["none"],
+      //     reason: "",
+      //     fraud_score: 20,
+      //   }, // Placeholder
+      // ]);
+      console.log(response);
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        accumulatedText += decoder.decode(value, { stream: true });
+
+        try {
+          // Try parsing JSON progressively
+          const json = JSON.parse(accumulatedText);
+          const body = json?.body || {};
+          const newBody = JSON.parse(body);
+          // Extract all required fields
+          const updatedData = {
+            statusCode: json?.statusCode ?? null,
+            fraud_score: newBody?.fraud_score ?? null,
+            status: newBody?.status ?? "",
+            flags: newBody?.flags ?? [],
+            reason:
+              newBody?.reason ??
+              "Please provide a file with an actual transaction.",
+          };
+          console.log(body);
+
+          // Stream the "reason" field letter by letter for a typing effect
+          const targetReason = updatedData.reason;
+          if (streamedReason.length < targetReason.length) {
+            for (let i = streamedReason.length; i < targetReason.length; i++) {
+              setTimeout(() => {
+                streamedReason += targetReason[i]; // Append each character
+                setMessages((prev) =>
+                  prev.map((msg, index) =>
+                    index === prev.length - 1 && msg.role === "bot"
+                      ? { ...msg, reason: streamedReason }
+                      : msg
+                  )
+                );
+              }, i * 20); // Adjust typing speed (50ms per character)
+            }
+          }
+
+          // Update all fields except "reason" instantly
+          setMessages((prev) =>
+            prev.map((msg, index) =>
+              index === prev.length - 1 && msg.role === "bot"
+                ? { ...msg, ...updatedData, reason: streamedReason }
+                : msg
+            )
+          );
+        } catch (error) {
+          // Ignore errors until JSON is fully parsed
+        }
+      }
+    } catch (error) {
+      console.error("Upload Error:", error);
+    }
+    setLoading(false);
+    setPrompt("");
+    handleClear();
+  };
+
   return (
     <>
       <div className="">

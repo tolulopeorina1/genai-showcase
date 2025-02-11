@@ -320,7 +320,7 @@ export default function AiCompliance() {
                             ...prevState,
                             forms: {
                               ...prevState.forms,
-                              selectedFile,
+                              selectedFile: selectedFile,
                             },
                           }));
                           navigate.push(`/more-features/ai-compliance`);

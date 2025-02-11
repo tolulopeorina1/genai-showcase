@@ -98,6 +98,13 @@ export default function FooterComponent({
           errorMessage={errorMessage}
           isInvalid={isInvalid}
           value={value}
+          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+            if (event.key === "Enter") {
+              if (handleGenerate) {
+                handleGenerate();
+              }
+            }
+          }}
           startContent={
             <div className=" flex items-center gap-x-2">
               <button

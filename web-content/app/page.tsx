@@ -5,7 +5,6 @@ import facebook from "@/public/images/svgs/facebook.svg";
 import linkedin from "@/public/images/svgs/linkedin.svg";
 import x from "@/public/images/svgs/x.svg";
 import chatBot from "@/public/images/svgs/chatBot.svg";
-import { v4 as uuidv4 } from "uuid";
 
 import awsPartner from "@/public/images/aws-partner.png";
 import Link from "next/link";
@@ -25,22 +24,9 @@ import {
   Add,
 } from "iconsax-react";
 import React, { useRef, useState } from "react";
-import {
-  Button,
-  Drawer,
-  DrawerBody,
-  DrawerContent,
-  DrawerFooter,
-  DrawerHeader,
-  Input,
-  Select,
-  SelectItem,
-  useDisclosure,
-} from "@heroui/react";
+import { Button, Input, Select, SelectItem } from "@heroui/react";
 import { users } from "./constants/mock-data";
-import FooterComponent from "./components/places/Footer";
-import thinking from "@/public/images/svgs/thinking.svg";
-import { endpointData } from "./constants/endpointa";
+import ChatBotComponent from "./components/places/ChatBot";
 
 const homepageItems = [
   {
@@ -103,16 +89,12 @@ const selectInput = [
 export default function Home() {
   const [isVisible, setIsVisible] = React.useState(false);
   const [prompt, setPrompt] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   const toggleVisibility = () => setIsVisible(!isVisible);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const { isOpen, onOpen, onOpenChange, onClose } = useDisclosure();
-  const [messages, setMessages] = useState<{ role: string; content: string }[]>(
-    []
-  );
-  const [loading, setLoading] = useState(false);
-  const generateId = () => uuidv4();
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -131,201 +113,10 @@ export default function Home() {
     }
   };
 
-  const handleGenerate = async (prompt: string) => {
-    if (!prompt.trim()) return;
-    setLoading(true);
-
-    // // Append user message
-    setMessages((prev) => [...prev, { role: "user", content: prompt }]);
-
-    // // Wait for state update before fetching response
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
-    console.log(messages); // This will still log the old state
-    const paylaoad = { body: { userMessage: prompt, conversationId: "1234" } };
-    // Send request to backend
-    const response = await fetch(endpointData.automatedChatBot, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(paylaoad),
-    });
-    console.log(response);
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
-    let accumulatedText = "";
-
-    let botMessage = { role: "bot", content: "" };
-
-    setMessages((prev) => [...prev, botMessage]); // Append an empty bot message first
-
-    while (reader) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      accumulatedText += decoder.decode(value, { stream: true });
-
-      // Update only the last bot message without removing previous ones
-      // setMessages((prev) =>
-      //   prev.map((msg, index) =>
-      //     index === prev.length - 1 && msg.role === "bot"
-      //       ? { ...msg, content: accumulatedText }
-      //       : msg
-      //   )
-      // );
-      setMessages((prev) => [
-        ...prev.slice(0, -1),
-        { role: "bot", content: accumulatedText },
-      ]);
-    }
-
-    setLoading(false);
-    setPrompt(""); // Clear input
+  const handleOpenBot = () => {
+    setIsOpen(true);
   };
 
-  const handleGenerates = async (prompt: string) => {
-    if (!prompt.trim()) return;
-    setLoading(true);
-
-    setMessages((prev) => [...prev, { role: "user", content: prompt }]);
-
-    await new Promise((resolve) => setTimeout(resolve, 0)); // Allow state update
-
-    console.log(messages); // Still logs old state due to React batching
-
-    const payload = { body: { userMessage: prompt, conversationId: "1234" } };
-
-    // Send request to backend
-    const response = await fetch(endpointData.automatedChatBot, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.body) {
-      console.error("Response body is empty.");
-      setLoading(false);
-      return;
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let accumulatedText = "";
-
-    // Append an empty bot message first
-    setMessages((prev) => [...prev, { role: "bot", content: "" }]);
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      accumulatedText += decoder.decode(value, { stream: true });
-
-      // Update only the last bot message in place
-      setMessages((prev) => {
-        const lastMessage = prev[prev.length - 1];
-        if (lastMessage?.role === "bot") {
-          return [
-            ...prev.slice(0, -1),
-            { ...lastMessage, content: accumulatedText },
-          ];
-        }
-        return prev;
-      });
-    }
-
-    setLoading(false);
-    setPrompt(""); // Clear input
-  };
-
-  const uploadFile = async (prompt: string) => {
-    try {
-      const conversationId = generateId();
-      // Add user message before request
-      setMessages((prev) => [...prev, { role: "user", content: prompt }]);
-      const bodyPayload = {
-        body: { userMessage: prompt, conversationId: conversationId },
-      };
-
-      // Send request to backend
-      const response = await fetch(endpointData.automatedChatBot, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyPayload),
-      });
-
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedText = "";
-      let streamedReason = "";
-
-      // Add a "bot" response placeholder
-      // setMessages((prev) => [
-      //   ...prev,
-      //   {
-      //     role: "bot",
-      //     name: file.name,
-      //     size: file.size,
-      //     description: "",
-      //     status: "",
-      //     statusCode: 200,
-      //     flags: ["none"],
-      //     reason: "",
-      //     fraud_score: 20,
-      //   }, // Placeholder
-      // ]);
-
-      while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        accumulatedText += decoder.decode(value, { stream: true });
-
-        try {
-          // Try parsing JSON progressively
-          const json = JSON.parse(accumulatedText);
-          const body = json?.body || {};
-          const newBody = JSON.parse(body);
-          // Extract all required fields
-          const updatedData = {
-            statusCode: json?.statusCode ?? null,
-            conversationId: newBody?.conversationId ?? [],
-            conversation: newBody?.response ?? "No reason provided",
-          };
-
-          // Stream the "reason" field letter by letter for a typing effect
-          const targetConvo = updatedData.conversation;
-          if (streamedReason.length < targetConvo.length) {
-            for (let i = streamedReason.length; i < targetConvo.length; i++) {
-              setTimeout(() => {
-                streamedReason += targetConvo[i]; // Append each character
-                setMessages((prev) =>
-                  prev.map((msg, index) =>
-                    index === prev.length - 1 && msg.role === "bot"
-                      ? { ...msg, content: streamedReason }
-                      : msg
-                  )
-                );
-              }, i * 20); // Adjust typing speed (50ms per character)
-            }
-          }
-
-          // Update all fields except "reason" instantly
-          setMessages((prev) =>
-            prev.map((msg, index) =>
-              index === prev.length - 1 && msg.role === "bot"
-                ? { ...msg, ...updatedData, content: streamedReason }
-                : msg
-            )
-          );
-        } catch (error) {
-          // Ignore errors until JSON is fully parsed
-        }
-      }
-    } catch (error) {
-      console.error("Upload Error:", error);
-    }
-    setLoading(false);
-    setPrompt("");
-    handleClear();
-  };
   return (
     <div className=" flex flex-col max-h-dvh font-[family-name:var(--font-jakarta-sans)] min-h-dvh relative ">
       <header className=" flex-col md:flex md:flex-row bg-gray-slate-200 py-4 flex justify-between items-center border-b border-solid border-b-gray-slate-100 px-8">
@@ -492,7 +283,7 @@ export default function Home() {
       </footer>
       <div
         className=" mb-4 fixed right-9 flex gap-x-2 bottom-[85px] cursor-pointer"
-        onClick={onOpen}
+        onClick={handleOpenBot}
       >
         <div className=" bg-white border border-solid border-[#D7DADF] rounded-[40px] py-4 px-[20px] h-[44px] flex items-center justify-center mr-[-20px] ">
           Hi there! 👋🏽
@@ -500,106 +291,7 @@ export default function Home() {
         <Image src={chatBot} alt="chat" width={80} height={80} />
       </div>
 
-      <Drawer
-        isOpen={isOpen}
-        onOpenChange={onOpenChange}
-        size="lg"
-        className=" rounded-none"
-        hideCloseButton
-      >
-        <DrawerContent>
-          {(onClose) => (
-            <>
-              <DrawerHeader className="flex flex-col gap-1 border-b-gray-slate-300 border border-solid bg-blue-slate-250">
-                <div className=" flex justify-between " onClick={onClose}>
-                  <h4 className=" text-black-slate-900 text-sm font-semibold ">
-                    CIL Gen-AI Chat bot
-                  </h4>
-                  <span className=" rotate-45 cursor-pointer">
-                    <Add size="20" color="#636C7E" />
-                  </span>
-                </div>
-              </DrawerHeader>
-              <DrawerBody>
-                <div className=" flex flex-col justify-between h-full">
-                  <div className=" text-black-slate-900">
-                    <h3 className=" font-normal text-4xl">Hi there!</h3>
-                    <h3 className=" text-[32px] font-bold">
-                      Get started with what need to know
-                    </h3>
-                  </div>
-                  <Image src={thinking} alt="logo" width={38} height={38} />
-                  <div className=" grid grid-cols-2 gap-4">
-                    <div className=" bg-[#F6F9FE] rounded-[7px] border bordr-solid border-[#C4D9F3] p-4 font-medium text-sm">
-                      Automated Fraud Detection and Prevention
-                    </div>
-                    <div className=" bg-[#F6F9FE] rounded-[7px] border bordr-solid border-[#C4D9F3] p-4 font-medium text-sm">
-                      Automated Fraud Detection and Prevention
-                    </div>
-                  </div>
-
-                  {messages.map((message, i) => {
-                    if (message.role === "bot") {
-                      return (
-                        <div key={i}>
-                          <div className=" flex gap-x-3 my-2 bg-blue-slate-250 rounded-lg p-4">
-                            <div>
-                              <div className=" flex gap-x-3">
-                                <div className=" bg-black-slate-800 rounded-full w-8 h-8 flex justify-center items-center">
-                                  <Cpu size="20" color="#E8EAED" />
-                                </div>
-                                <h3 className=" text-black-slate-900 font-semibold text-lg">
-                                  {messages[i - 1].content}
-                                  connf
-                                </h3>
-                              </div>
-                              <p className=" text-black-slate-900 font-normal ml-11">
-                                {message.content}
-                                bidndnd
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    } else {
-                      return (
-                        <div
-                          className=" flex gap-x-3 justify-end my-2 items-center"
-                          key={i}
-                        >
-                          <p className=" text-right">
-                            {message.content}
-                            djdjdjd
-                          </p>
-                          <div className=" bg-blue-slate-500 rounded-full w-8 h-8 min-w-8 flex justify-center items-center">
-                            <User size="20" color="#E8EAED" />
-                          </div>
-                        </div>
-                      );
-                    }
-                  })}
-                </div>
-              </DrawerBody>
-              <DrawerFooter className=" block">
-                <FooterComponent
-                  selectedFile={selectedFile}
-                  handleClear={handleClear}
-                  fileInputRef={fileInputRef}
-                  handleFileChange={handleFileChange}
-                  handleButtonClick={handleButtonClick}
-                  setPrompt={setPrompt}
-                  handleGenerate={() => {
-                    // appState.forms.inputChange(prompt);
-                    // navigate.push(`/more-features/document-processing`);
-                    handleGenerates(prompt);
-                  }}
-                  notFixedPosition
-                />
-              </DrawerFooter>
-            </>
-          )}
-        </DrawerContent>
-      </Drawer>
+      <ChatBotComponent isOpen={isOpen} setIsOpen={setIsOpen} />
     </div>
   );
 }
