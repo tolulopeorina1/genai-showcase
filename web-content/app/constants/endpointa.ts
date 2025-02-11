@@ -13,5 +13,6 @@ export const endpointData = {
     "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev/chatbot/chat_tutor",
   aiTutorGet:
     "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev/chatbot/modules",
-  documentSummary: "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev",
+  documentSummary:
+    "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev/textract-gen-ai",
 };

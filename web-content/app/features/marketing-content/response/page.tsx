@@ -127,12 +127,7 @@ export default function Response() {
             {messages.map((message, i) => {
               if (message.role === "bot") {
                 return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5 }}
-                  >
+                  <div key={i}>
                     <div className=" flex gap-x-3 my-2 bg-blue-slate-250 rounded-lg p-4">
                       <div>
                         <div className=" flex gap-x-3">
@@ -157,7 +152,7 @@ export default function Response() {
                         Regenerate
                       </span>
                     </div>
-                  </motion.div>
+                  </div>
                 );
               } else {
                 return (

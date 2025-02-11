@@ -92,7 +92,6 @@ export default function ChatBotComponent({
   };
 
   const handleSubmit = async (prompt: string) => {
-    console.log("I have been called", input, prompt);
     setLoading(true);
     setShowFirstPrompts(false);
     if (!prompt.trim() || loading) return;
