@@ -87,71 +87,166 @@ export default function ChatBotComponent({
     }
   };
 
-  const handleSubmit = async (prompt: string) => {
-    if (!prompt.trim() || loading) return;
+  // const handleSubmit = async (prompt: string) => {
+  //   if (!prompt.trim() || loading) return;
 
-    setLoading(true);
-    setShowFirstPrompts(false);
-    const userMessage = prompt.trim();
-    setInput("");
+  //   setLoading(true);
+  //   setShowFirstPrompts(false);
+  //   const userMessage = prompt.trim();
+  //   setInput("");
     
-    // Add user message
-    setMessages(prev => [...prev, { role: "user", content: userMessage }]);
+  //   // Add user message
+  //   setMessages(prev => [...prev, { role: "user", content: userMessage }]);
     
-    // Reset assistant message
-    latestAssistantMessage.current = "";
+  //   // Reset assistant message
+  //   latestAssistantMessage.current = "";
     
-    try {
-      // Add empty assistant message immediately
-      setMessages(prev => [...prev, { role: "assistant", content: "" }]);
+  //   try {
+  //     // Add empty assistant message immediately
+  //     setMessages(prev => [...prev, { role: "assistant", content: "" }]);
 
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "text/event-stream",
-        },
-        body: JSON.stringify({
-          prompt: userMessage,
-          conversation_id: conversationId.current,
-        }),
-      });
+  //     const response = await fetch("/api/chat", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         "Accept": "text/event-stream",
+  //       },
+  //       body: JSON.stringify({
+  //         prompt: userMessage,
+  //         conversation_id: conversationId.current,
+  //       }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`HTTP error! status: ${response.status}`);
+  //     }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("No reader available");
-      }
+  //     const reader = response.body?.getReader();
+  //     if (!reader) {
+  //       throw new Error("No reader available");
+  //     }
 
-      const decoder = new TextDecoder();
-      let buffer = "";
+  //     const decoder = new TextDecoder();
+  //     let buffer = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
+  //     while (true) {
+  //       const { done, value } = await reader.read();
+  //       if (done) break;
 
-        // Decode the chunk and add it to our buffer
-        buffer += decoder.decode(value, { stream: true });
+  //       // Decode the chunk and add it to our buffer
+  //       buffer += decoder.decode(value, { stream: true });
 
-        // Split on double newlines to separate events
-        const lines = buffer.split('\n\n');
+  //       // Split on double newlines to separate events
+  //       const lines = buffer.split('\n\n');
         
-        // Process all complete messages
-        for (let i = 0; i < lines.length - 1; i++) {
-          const line = lines[i].trim();
-          if (line) {
-            const text = parseStreamChunk(line);
+  //       // Process all complete messages
+  //       for (let i = 0; i < lines.length - 1; i++) {
+  //         const line = lines[i].trim();
+  //         if (line) {
+  //           const text = parseStreamChunk(line);
+  //           if (text) {
+  //             latestAssistantMessage.current += text;
+              
+  //             setMessages(prev => {
+  //               const newMessages = [...prev];
+  //               const lastIndex = newMessages.length - 1;
+                
+  //               if (lastIndex >= 0 && newMessages[lastIndex].role === "assistant") {
+  //                 newMessages[lastIndex] = {
+  //                   role: "assistant",
+  //                   content: latestAssistantMessage.current,
+  //                 };
+  //               }
+  //               return newMessages;
+  //             });
+  //           }
+  //         }
+  //       }
+
+  //       // Keep the last incomplete message in the buffer
+  //       buffer = lines[lines.length - 1];
+  //     }
+  //   } catch (error) {
+  //     console.error("Error:", error);
+  //     setMessages(prev => [
+  //       ...prev,
+  //       {
+  //         role: "assistant",
+  //         content: `Error: ${error instanceof Error ? error.message : "Something went wrong. Please try again."}`
+  //       }
+  //     ]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+
+   const handleSubmit = async (prompt: string) => {
+  setLoading(true);
+  setShowFirstPrompts(false);
+  if (!prompt.trim() || loading) return;
+
+  const userMessage = prompt.trim();
+  setInput("");
+  setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
+  latestAssistantMessage.current = "";
+
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream"
+      },
+      body: JSON.stringify({
+        prompt: userMessage,
+        conversation_id: conversationId.current,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    setMessages((prev) => [
+      ...prev,
+      { role: "assistant", content: "" },
+    ]);
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+
+    if (!reader) {
+      throw new Error("No reader available");
+    }
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      // Decode the chunk
+      const chunk = decoder.decode(value);
+      
+      // Split the chunk into individual messages
+      const messages = chunk.split('\n');
+      
+      for (const message of messages) {
+        if (message.trim()) {
+          let text = '';
+          try {
+            const parsed = JSON.parse(message.replace(/^data: /, ''));
+            if (parsed.chunk?.text) {
+              text = parsed.chunk.text;
+            } else if (parsed.message?.content?.[0]?.text) {
+              text = parsed.message.content[0].text;
+            }
+            
             if (text) {
               latestAssistantMessage.current += text;
-              
-              setMessages(prev => {
+              setMessages((prev) => {
                 const newMessages = [...prev];
                 const lastIndex = newMessages.length - 1;
-                
-                if (lastIndex >= 0 && newMessages[lastIndex].role === "assistant") {
+                if (newMessages[lastIndex]?.role === "assistant") {
                   newMessages[lastIndex] = {
                     role: "assistant",
                     content: latestAssistantMessage.current,
@@ -160,25 +255,27 @@ export default function ChatBotComponent({
                 return newMessages;
               });
             }
+          } catch (e) {
+            console.error("Error parsing message:", e);
           }
         }
-
-        // Keep the last incomplete message in the buffer
-        buffer = lines[lines.length - 1];
       }
-    } catch (error) {
-      console.error("Error:", error);
-      setMessages(prev => [
-        ...prev,
-        {
-          role: "assistant",
-          content: `Error: ${error instanceof Error ? error.message : "Something went wrong. Please try again."}`
-        }
-      ]);
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Error:", error);
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        content: `Error: ${
+          error instanceof Error ? error.message : "Something went wrong. Please try again."
+        }`,
+      },
+    ]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <Drawer
