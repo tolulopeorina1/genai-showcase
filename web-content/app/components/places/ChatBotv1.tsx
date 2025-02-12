@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Drawer,
   DrawerBody,
@@ -44,7 +42,7 @@ export default function ChatBotComponent({
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const conversationId = useRef<string>(crypto.randomUUID());
-  const latestAssistantMessage = useRef<string>("");
+  const latestAssistantMessage = useRef<string>(""); // Store assistant message to prevent duplication
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -117,7 +115,10 @@ export default function ChatBotComponent({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "" }, // Add empty message first
+      ]);
 
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
@@ -134,20 +135,24 @@ export default function ChatBotComponent({
 
         buffer += decoder.decode(value, { stream: true });
 
-        const messagesToProcess = buffer.split("\n\n");
+        const messages = buffer.split("\n\n");
 
-        for (let i = 0; i < messagesToProcess.length - 1; i++) {
-          const message = messagesToProcess[i].replace(/^data: /, "").trim();
+        for (let i = 0; i < messages.length - 1; i++) {
+          const message = messages[i].replace(/^data: /, "").trim();
           if (message) {
             const text = parseStreamChunk(message);
             if (text) {
               latestAssistantMessage.current += text;
 
               setMessages((prev) => {
-                const newMessages = prev.map((msg) => ({ ...msg }));
+                const newMessages = [...prev];
                 const lastIndex = newMessages.length - 1;
+
                 if (newMessages[lastIndex]?.role === "assistant") {
-                  newMessages[lastIndex].content = latestAssistantMessage.current;
+                  newMessages[lastIndex] = {
+                    role: "assistant",
+                    content: latestAssistantMessage.current,
+                  };
                 }
                 return newMessages;
               });
@@ -155,7 +160,7 @@ export default function ChatBotComponent({
           }
         }
 
-        buffer = messagesToProcess[messagesToProcess.length - 1];
+        buffer = messages[messages.length - 1]; // Keep the last incomplete message
       }
     } catch (error) {
       console.error("Error:", error);
@@ -197,7 +202,7 @@ export default function ChatBotComponent({
                 </div>
               </DrawerHeader>
               <DrawerBody>
-                <div className=" flex flex-col  h-full max-w-[420px]">
+                <div className=" flex flex-col  h-full max-w-[420px]">
                   {showFirstPrompts && (
                     <div className=" flex flex-col justify-between h-full">
                       <div className=" text-black-slate-900">
@@ -236,8 +241,7 @@ export default function ChatBotComponent({
                                   <Cpu size="20" color="#E8EAED" />
                                 </div>
                                 <h3 className=" text-black-slate-900 font-semibold text-lg">
-                                  {/* {messages[i - 1]?.content}  */}
-                                  {messages[i-1]?.content}
+                                  {messages[i - 1].content}
                                 </h3>
                               </div>
                               <p className=" text-black-slate-900 font-normal ml-11">
@@ -247,4 +251,46 @@ export default function ChatBotComponent({
                           </div>
                         </div>
                       );
-                    } else
+                    } else {
+                      return (
+                        <div
+                          className=" flex gap-x-3 justify-end my-2 items-center"
+                          key={i}
+                        >
+                          <p className=" text-right">{message.content}</p>
+                          <div className=" bg-blue-slate-500 rounded-full w-8 h-8 min-w-8 flex justify-center items-center">
+                            <User size="20" color="#E8EAED" />
+                          </div>
+                        </div>
+                      );
+                    }
+                  })}
+                </div>
+                {loading && (
+                  <Image src={thinking} alt="logo" width={38} height={38} />
+                )}
+              </DrawerBody>
+              <DrawerFooter className=" block">
+                <FooterComponent
+                  selectedFile={selectedFile}
+                  handleClear={handleClear}
+                  fileInputRef={fileInputRef}
+                  handleFileChange={handleFileChange}
+                  handleButtonClick={handleButtonClick}
+                  setPrompt={setInput}
+                  handleGenerate={() => {
+                    // handleGenerate(prompt);
+                    handleSubmit(input);
+                  }}
+                  value={input}
+                  loading={loading}
+                  notFixedPosition
+                />
+              </DrawerFooter>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+}
