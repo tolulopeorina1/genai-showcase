@@ -248,3 +248,46 @@ export default function ChatBotComponent({
                         </div>
                       );
                     } else
+                    
+                    {
+                      return (
+                        <div
+                          className=" flex gap-x-3 justify-end my-2 items-center"
+                          key={i}
+                        >
+                          <p className=" text-right">{message.content}</p>
+                          <div className=" bg-blue-slate-500 rounded-full w-8 h-8 min-w-8 flex justify-center items-center">
+                            <User size="20" color="#E8EAED" />
+                          </div>
+                        </div>
+                      );
+                    }
+                  })}
+                </div>
+                {loading && (
+                  <Image src={thinking} alt="logo" width={38} height={38} />
+                )}
+              </DrawerBody>
+              <DrawerFooter className=" block">
+                <FooterComponent
+                  selectedFile={selectedFile}
+                  handleClear={handleClear}
+                  fileInputRef={fileInputRef}
+                  handleFileChange={handleFileChange}
+                  handleButtonClick={handleButtonClick}
+                  setPrompt={setInput}
+                  handleGenerate={() => {
+                    handleSubmit(input);
+                  }}
+                  value={input}
+                  loading={loading}
+                  notFixedPosition
+                />
+              </DrawerFooter>
+            </>
+          )}
+        </DrawerContent>
+      </Drawer>
+    </>
+  );
+}
