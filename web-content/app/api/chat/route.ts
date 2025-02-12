@@ -1,24 +1,38 @@
-export async function POST(request: Request) {
-  const { prompt, conversation_id } = await request.json();
+// app/api/chat/route.ts
 
-  // Call your AWS Lambda function
-  const response = await fetch(
-    "https://cw5fd4g5qhpf35pbno6jyqsy4m0ulhpf.lambda-url.us-east-1.on.aws/",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ prompt, conversation_id }),
+export async function POST(req: Request) {
+  const encoder = new TextEncoder();
+  const { prompt, conversation_id } = await req.json();
+
+  // Create a stream
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        // Your AI integration code here
+        // For each chunk of response, send it like this:
+        controller.enqueue(
+          encoder.encode(
+            `data: ${JSON.stringify({
+              contentBlockDelta: {
+                delta: { text: "Your text here" }
+              }
+            })}\n\n`
+          )
+        );
+      } catch (error) {
+        controller.error(error);
+      } finally {
+        controller.close();
+      }
     }
-  );
+  });
 
-  // Return the stream directly
-  return new Response(response.body, {
+  // Return the stream with proper headers
+  return new Response(stream, {
     headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
     },
   });
 }
