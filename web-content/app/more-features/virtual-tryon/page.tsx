@@ -26,8 +26,13 @@ import { endpointData } from "@/app/constants/endpointa";
 import { v4 as uuidv4 } from "uuid";
 import { motion } from "framer-motion";
 import imageCompression from "browser-image-compression";
+import { Amplify } from "aws-amplify";
+Amplify.configure(ampConfig);
+import { downloadData, getUrl } from "aws-amplify/storage";
+import { ampConfig } from "@/aws-amp-config";
 
 export default function VirtualTryOn() {
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const navigate = useRouter();
@@ -51,6 +56,21 @@ export default function VirtualTryOn() {
     "border border-solid border-gray-slate-300 rounded-[8px] bg-gray-slate-200",
   ];
 
+  const getImageUrls = async (imagesPaths: string[]) => {
+    console.log(imagesPaths);
+    try {
+      const urlPromises = imagesPaths?.map(async (path) => {
+        const { url } = await getUrl({ path });
+        console.log(url);
+
+        return url.toString();
+      });
+      return Promise.all(urlPromises);
+    } catch (err) {
+      setError("Error generating plot URLs");
+      return [];
+    }
+  };
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -70,7 +90,7 @@ export default function VirtualTryOn() {
     negativePrompt: "",
     productService: "",
     aspectRatio: "", // Assuming default empty or set to a default option
-    numImages: 50, // Default value of the slider
+    numImages: 3, // Default value of the slider
   });
   const handleButtonClick = () => {
     fileInputRef.current?.click();
@@ -173,7 +193,7 @@ export default function VirtualTryOn() {
       console.log(formData);
 
       const response = await fetch(
-        "https://y8zhxgsk38.execute-api.us-east-1.amazonaws.com/dev/personalized-product-images/upload",
+        "https://jjg4puugocxyustegcaqzy6yi40lqfos.lambda-url.us-east-1.on.aws",
         {
           method: "POST",
           body: formData,
@@ -183,7 +203,8 @@ export default function VirtualTryOn() {
       const result = await response.json();
       console.log("Upload successful:", result);
       if (result?.imagePaths.length > 0) {
-        setReturnedImages(result?.imagePaths);
+        const imagePaths = await getImageUrls(result?.imagePaths);
+        setReturnedImages(imagePaths);
         setIsGenerate(true);
       } else {
         setIsGenerate(false);
@@ -277,7 +298,7 @@ export default function VirtualTryOn() {
           <Slider
             label="Numbers of Images"
             step={1}
-            maxValue={6}
+            maxValue={5}
             minValue={1}
             defaultValue={formData.numImages}
             value={formData.numImages}
@@ -447,14 +468,14 @@ export default function VirtualTryOn() {
               )}
             </div>
           ) : (
-            <div className=" flex items-center justify-center flex-wrap">
+            <div className=" flex items-center justify-center flex-wrap gap-2 h-[calc(100vh-119px)] overflow-y-scroll customScrollBar">
               {returnedImages.map((item) => (
                 <img
                   src={item}
                   alt={item}
                   key={item}
                   width={400}
-                  className=" min-w-[300px] max-w-[420px] "
+                  className=" min-w-[100px] max-w-[300px] rounded-lg"
                 />
               ))}
             </div>

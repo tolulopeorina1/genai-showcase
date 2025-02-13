@@ -1,0 +1,41 @@
+// aws-amp-config.ts
+import { Amplify, type ResourcesConfig } from "aws-amplify";
+
+export const ampConfig = {
+  Auth: {
+    Cognito: {
+      userPoolClientId: "6gijns0ha1i99riv57t9q5fv16",
+      userPoolId: "us-east-1_NXZP3TRTc",
+      // REQUIRED only for Federated Authentication - Amazon Cognito Identity Pool ID
+      identityPoolId: "us-east-1:aef56353-fe66-482e-bcba-d23b76022e9b",
+      // OPTIONAL - Set to true to use your identity pool's unauthenticated role when user is not logged in
+      allowGuestAccess: true,
+      //   signUpVerificationMethod: 'code',
+      //   loginWith: {
+      //     username: true,
+      //   }
+    },
+  },
+  Storage: {
+    S3: {
+      region: "us-east-1", // (required) - Amazon S3 bucket region
+      bucket: "cil-gen-ai-use-cases", // (required) - Amazon S3 bucket URI
+    },
+  },
+  API: {
+    //   REST: {
+    //     liveness: {
+    //       endpoint:
+    //       'https://7awbxt6nkf.execute-api.us-east-1.amazonaws.com/dev',
+    //       region: 'us-east-1' // Optional
+    //     }
+    //   },
+    GraphQL: {
+      endpoint:
+        "https://acujehhvcrcttcttvkwbcdh7ma.appsync-api.us-east-1.amazonaws.com/graphql",
+      region: "us-east-1",
+      defaultAuthMode: "apiKey",
+      apiKey: "da2-3z6eloh7ufa4xdpp3h6pukvao4",
+    },
+  },
+} as ResourcesConfig;

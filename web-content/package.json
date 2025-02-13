@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@heroui/react": "^2.6.14",
-    "aws-amplify": "^6.12.2",
+    "aws-amplify": "^6.13.0",
     "axios": "^1.7.9",
     "browser-image-compression": "^2.0.2",
     "framer-motion": "^12.0.8",
